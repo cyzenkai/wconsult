@@ -1,0 +1,877 @@
+html
+    head
+
+        link(rel='stylesheet', href='/assets/js/json-viewer/jquery.json-viewer.css')
+        link(rel='stylesheet', href='/assets/css/carousel.css')
+        link(rel='stylesheet', href='/assets/css/index.css')
+        link(rel='stylesheet', href='/assets/font/css/all.css')
+        link(rel='stylesheet', href='/assets/font/css/fontawesome.css')
+        link(rel='stylesheet', href='/assets/font/css/solid.css')
+        link(rel='stylesheet', href='/assets/js/jqueryui/jquery-ui.css')
+        link(rel='stylesheet', href='/assets/css/dropdown.css')
+        link(rel='stylesheet', href='/assets/css/arleebird.css')
+        link(rel='stylesheet', href='/assets/js/charts/Chart.css')
+        link(rel='stylesheet', href='/assets/css/chat.css')
+        
+        script(src='/assets/js/jquery-3.4.1.min.js')
+        script(src='/assets/js/socket/socket.io.js')
+        script(src='/assets/js/createjs-2013.09.25.min.js')
+        script(src='/assets/js/ndgmr.Collision.js')
+        script(src='/assets/js/arleebird.js')
+        script(src='/assets/js/dropdown.js')
+        script(src='/assets/js/charts/Chart.js')
+        
+        script(src='/assets/js/jquery.mark.min.js')
+        script(src='/assets/js/jqueryui/jquery-ui.js')
+        script(src='/assets/js/misc.js')
+        script(src='/assets/js/main.js')
+        script(src='/assets/js/pako.min.js')
+        script(src='/assets/js/logfilereader.js')
+        script(src='/assets/js/json-viewer/jquery.json-viewer.js')
+        script(src='/assets/js/goalseek.js')
+        script(src='/assets/js/charts/chartjs-plugin-labels.min.js')
+        script(src='/assets/js/stopwatch.js')
+        script(src='/assets/js/escalation.js')
+        script(src='/assets/js/consult.js')
+        script(src='/assets/js/cctos.js')
+        script(src='/assets/js/stats.js')
+        script(src='/assets/js/sme.js')
+        script(src='/assets/js/template.js')
+        script(src='/assets/js/chat.js')
+        script(src='/assets/js/chatconsult.js')
+        script(src='/assets/js/chattrainer.js')
+
+
+    - try{var userCC = JSON.parse(userdetails).users_CC;var userCES = JSON.parse(userdetails).users_CES;var userLOB = JSON.parse(userdetails).users_LOB; console.log(userLOB); var userLevel = JSON.parse(userdetails).users_type.substr(6,1);var userType = JSON.parse(userdetails).users_type=='RTA'?'RTA':JSON.parse(userdetails).users_type.substr(8);var userAlias = JSON.parse(userdetails).users_alias;}catch(error){loadEmergency()}
+    body(onload="expertName=getCookie('expertname');recordUser(expertName);console.log(expertName);ecommerceCalc();")
+        #screensaver(style='display:none')
+            div(style='display:table-cell;vertical-align:middle;')
+                img#screensaverSlides(src='' style='width:100%')
+        audio#chatConsultAudio.hiddenDiv(controls)
+            source(src="/assets/audio/dehngdohng.mp3" type="audio/mp3") 
+        if(userType=='RTA')
+            #quicklinks_panel.sidebar(style='color:white;', onmouseover='toggleQuicklinks($(this));', onmouseout='toggleQuicklinks($(this));')
+                | Quick Links
+        else if (userLOB=='CCT ARLO')        
+            #quicklinks_panel.sidebar(style='color:white;', onmouseover='toggleQuicklinks($(this));', onmouseout='toggleQuicklinks($(this));')
+                | Quick Links
+                .row
+                    #quicklinks
+                    a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/CCTEOS','ccteosScript');") CCT EOS
+                    a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/standard','standardScript');") Standard
+                    a(href='#', onclick="loadExternal('/partials/references/references-tagging','loadref-taggingScript');") 
+                        | Tagging Sandbox 
+                        b.newAnimate(style='display:inline;color:#16c4b6') NEW
+                    a(href='#', onclick="loadExternal('/partials/compare','loadCompareScript');") Compare 
+                    a(href='#', onclick="loadExternal('/partials/references/references-subscription','loadref-subscriptionscript');") New Service Plans 
+                    div(style='position:absolute;bottom:70px;font-size:10px;font-family:Verdana')
+                        hr
+                        #ecomTimeEST(href='#')
+                        #ecomTimeCST(href='#')
+                        #ecomTimeMST(href='#')
+                        #ecomTimePST(href='#')
+                        #ecomStatus(href='#')
+                        #cctStatus(href='#')
+                        br
+                        | 				ECOM #
+                        br
+                        |  18667037170
+                        br
+                        br
+                        | 				CCT #
+                        br
+                        |  18338986988
+                        br
+        else if (userLOB=='OS ARLO')
+            #quicklinks_panel.sidebar(style='color:white;', onmouseover='toggleQuicklinks($(this));', onmouseout='toggleQuicklinks($(this));')
+                | Quick Links
+                .row
+                    #quicklinks
+                    a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/OSEOS','oseosScript');") OS EOS
+                    a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/standard','standardScript');") Standard
+                    a(href='#', onclick="loadExternal('/partials/references/references-tagging','loadref-taggingScript');") 
+                        | Tagging Sandbox 
+                        b.newAnimate(style='display:inline;color:#16c4b6') NEW
+                    a(href='#', onclick="loadExternal('/partials/compare','loadCompareScript');") Compare 
+                    a(href='#', onclick="loadExternal('/partials/references/references-subscription','loadref-subscriptionscript');") New Service Plans 
+                    div(style='position:absolute;bottom:70px;font-size:10px;font-family:Verdana')
+                        hr
+                        #ecomTimeEST(href='#')
+                        #ecomTimeCST(href='#')
+                        #ecomTimeMST(href='#')
+                        #ecomTimePST(href='#')
+                        #ecomStatus(href='#')
+                        #cctStatus(href='#')
+                        br
+                        | 				ECOM #
+                        br
+                        |  18667037170
+                        br
+                        br
+                        | 				CCT #
+                        br
+                        |  18338986988
+                        br
+        else if (userLOB=='CCT/OS ARLO')        
+            #quicklinks_panel.sidebar(style='color:white;', onmouseover='toggleQuicklinks($(this));', onmouseout='toggleQuicklinks($(this));')
+                | Quick Links
+                .row
+                    #quicklinks
+                    a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/OSEOS','oseosScript');") OS EOS
+                    a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/CCTEOS','ccteosScript');") CCT EOS
+                    a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/standard','standardScript');") Standard
+                    a(href='#', onclick="loadExternal('/partials/references/references-tagging','loadref-taggingScript');") 
+                        | Tagging Sandbox 
+                        b.newAnimate(style='display:inline;color:#16c4b6') NEW
+                    a(href='#', onclick="loadExternal('/partials/compare','loadCompareScript');") Compare 
+                    a(href='#', onclick="loadExternal('/partials/references/references-subscription','loadref-subscriptionscript');") New Service Plans 
+                    div(style='position:absolute;bottom:70px;font-size:10px;font-family:Verdana')
+                        hr
+                        #ecomTimeEST(href='#')
+                        #ecomTimeCST(href='#')
+                        #ecomTimeMST(href='#')
+                        #ecomTimePST(href='#')
+                        #ecomStatus(href='#')
+                        #cctStatus(href='#')
+                        br
+                        | 				ECOM #
+                        br
+                        |  18667037170
+                        br
+                        br
+                        | 				CCT #
+                        br
+                        |  18338986988
+                        br
+        else if (userLOB=='L1 IOPEX')
+            #quicklinks_panel.sidebar(style='color:white;', onmouseover='toggleQuicklinks($(this));', onmouseout='toggleQuicklinks($(this));')
+                | Quick Links
+                .row
+                    #quicklinks
+                    a(href='#', onclick="loadExternal('/partials/compare','loadCompareScript');") Compare 
+                    a(href='#', onclick="loadExternal('/partials/references/references-tagging','loadref-taggingScript');") 
+                        | Tagging Sandbox 
+                        b.newAnimate(style='display:inline;color:#16c4b6') NEW
+                    a(href='#', onclick="loadExternal('/partials/references/references-subscription','loadref-subscriptionscript');") New Service Plans 
+                    a(href='#', onclick="loadExternal('/partials/references/floodlight')") Arlo Flood Light
+                    a(href='#', onclick="loadExternal('/partials/setupandguides/install-floodlight','loadFLInstallscript')") Flood Light Install
+                    div(style='position:absolute;bottom:70px;font-size:10px;font-family:Verdana')
+                        .hiddenDiv
+                            div Warehouse Holiday Schedule/Cut-off:
+                            br
+                            div(style='color:#5ec4ff') Tracelogix (US):
+                            div 12/24/19 2PM CST
+                            div(style='color:#ff7373') 12/25/19 CLOSED
+                            div 12/26/19 2PM CST
+                            div(style='color:#ff7373') 01/01/20 CLOSED
+                            div(style='color:#ff7373') 01/02/20 CLOSED
+                            br
+                            div(style='color:#5ec4ff') Ingram (UK):
+                            div(style='color:#ff7373') 12/25/19 CLOSED
+                            div(style='color:#ff7373') 12/26/20 CLOSED
+                            div(style='color:#ff7373') 01/01/20 CLOSED
+                            br
+                            div(style='color:#5ec4ff') Brightstar (Aus):
+                            | 				12/24/19
+                            br
+                            | 				 -Cutoff: 12PM ET
+                            br
+                            | 				 -Closed: 3PM ET
+                            br
+                            div(style='color:#ff7373') 12/25/19 CLOSED
+                            div(style='color:#ff7373') 12/26/19 CLOSED
+                            | 				12/31/19
+                            br
+                            | 				 -Cutoff: 12PM ET
+                            br
+                            | 				 -Closed: 3PM ET
+                            br
+                            div(style='color:#ff7373') 01/01/20 CLOSED
+                            br
+                            div(style='color:#5ec4ff') Brightstar (NZ):
+                            | 				12/24/19
+                            br
+                            | 				 -Cutoff: 12PM NZST
+                            br
+                            | 				 -Closed: 3PM NZST
+                            br
+                            div(style='color:#ff7373') 12/25/19 CLOSED
+                            div(style='color:#ff7373') 12/26/19 CLOSED
+                            | 				12/31/19
+                            br
+                            | 				 -Cutoff: 12PM NZST
+                            br
+                            | 				 -Closed: 3PM NZST
+                            br
+                            div(style='color:#ff7373') 01/01/20 CLOSED
+                        hr
+                        #ecomTimeEST(href='#')
+                        #ecomTimeCST(href='#')
+                        #ecomTimeMST(href='#')
+                        #ecomTimePST(href='#')
+                        #ecomStatus(href='#')
+                        #cctStatus(href='#')
+                        br
+                        | 				ECOM #
+                        br
+                        |  18667037170
+                        br
+                        br
+                        | 				CCT #
+                        br
+                        |  18338986988
+                        br
+        else
+            #quicklinks_panel.sidebar(style='color:white;', onmouseover='toggleQuicklinks($(this));', onmouseout='toggleQuicklinks($(this));')
+                | Quick Links
+                .row
+                    #quicklinks
+                    if userType=='SME'
+                        a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/SMEEOS','smeeosScript');") SME EOS
+                    else
+                        a.newAnimateStandard(href='#', onclick="loadExternal('/partials/templates/standard','standardScript');") Standard
+                    a(href='#', onclick="loadExternal('/partials/templates/chat','chatScript');") 
+                        | Chat 
+                        b.newAnimate(style='display:inline;color:#16c4b6') NEW
+                    a(href='#', onclick="loadExternal('/partials/references/references-tagging','loadref-taggingScript');") 
+                        | Tagging Sandbox 
+                        b.newAnimate(style='display:inline;color:#16c4b6') NEW
+                    a(href='#', onclick="loadExternal('/partials/compare','loadCompareScript');") Compare 
+                    a(href='#', onclick="loadExternal('/partials/references/references-subscription','loadref-subscriptionscript');") New Service Plans 
+                    a(href='#', onclick="loadExternal('/partials/references/references-elearning','');") elearning Modules 
+                    a(href='#', onclick="loadExternal('/partials/references/floodlight')") Arlo Flood Light
+                    a(href='#', onclick="loadExternal('/partials/setupandguides/install-floodlight','loadFLInstallscript')") Flood Light Install
+                    div(style='position:absolute;bottom:70px;font-size:10px;font-family:Verdana')
+                        .hiddenDiv
+                            div Warehouse Holiday Schedule/Cut-off:
+                            br
+                            div(style='color:#5ec4ff') Tracelogix (US):
+                            div 12/24/19 2PM CST
+                            div(style='color:#ff7373') 12/25/19 CLOSED
+                            div 12/26/19 2PM CST
+                            div(style='color:#ff7373') 01/01/20 CLOSED
+                            div(style='color:#ff7373') 01/02/20 CLOSED
+                            br
+                            div(style='color:#5ec4ff') Ingram (UK):
+                            div(style='color:#ff7373') 12/25/19 CLOSED
+                            div(style='color:#ff7373') 12/26/20 CLOSED
+                            div(style='color:#ff7373') 01/01/20 CLOSED
+                            br
+                            div(style='color:#5ec4ff') Brightstar (Aus):
+                            | 				12/24/19
+                            br
+                            | 				 -Cutoff: 12PM ET
+                            br
+                            | 				 -Closed: 3PM ET
+                            br
+                            div(style='color:#ff7373') 12/25/19 CLOSED
+                            div(style='color:#ff7373') 12/26/19 CLOSED
+                            | 				12/31/19
+                            br
+                            | 				 -Cutoff: 12PM ET
+                            br
+                            | 				 -Closed: 3PM ET
+                            br
+                            div(style='color:#ff7373') 01/01/20 CLOSED
+                            br
+                            div(style='color:#5ec4ff') Brightstar (NZ):
+                            | 				12/24/19
+                            br
+                            | 				 -Cutoff: 12PM NZST
+                            br
+                            | 				 -Closed: 3PM NZST
+                            br
+                            div(style='color:#ff7373') 12/25/19 CLOSED
+                            div(style='color:#ff7373') 12/26/19 CLOSED
+                            | 				12/31/19
+                            br
+                            | 				 -Cutoff: 12PM NZST
+                            br
+                            | 				 -Closed: 3PM NZST
+                            br
+                            div(style='color:#ff7373') 01/01/20 CLOSED
+                        hr
+                        #ecomTimeEST(href='#')
+                        #ecomTimeCST(href='#')
+                        #ecomTimeMST(href='#')
+                        #ecomTimePST(href='#')
+                        #ecomStatus(href='#')
+                        #cctStatus(href='#')
+                        br
+                        | 				ECOM #
+                        br
+                        |  18667037170
+                        br
+                        br
+                        | 				CCT #
+                        br
+                        |  18338986988
+                        br
+        if userLOB=='CCT IOPEX' || userLOB=='CCT ARLO' || userLOB=='CCT/OS ARLO'
+            label.switch_cctconsult
+                b(style="font-size:14px;color:white;z-index:100;right:330px!important;position:fixed")
+                    span.badge.hiddenDiv#chatBadgeChatConsult 0
+                b(style="font-size:14px;color:white;z-index:100;right:265px!important;position:fixed") Consult
+                input(type="checkbox" id="cctavailconsult" onchange="cctconsultchange($('#cctavailconsult').prop('checked'));")
+                span.slider_cctconsult.round_cctconsult
+            .chat-popup#chatFormChatCCTConsult
+                form.form-container.hiddenDiv#formChatCCTConsult(action="")
+                    ul#chatuserlistChatCCTConsult.hiddenDiv(style="list-style-type:none")
+                    span.btn.cancel(onclick="closeFormChatConsult();",style="border: solid black; border-width: 0 3px 3px 0; display: inline-block; padding: 3px;transform: rotate(45deg); -webkit-transform: rotate(45deg);")
+                    b(style="font-size:12px;") Chat Consult: 
+                        span#roomnameCCTConsult
+                    div(style="font-size:12px;")
+                        span.btn#end_chatCCTconsult(style="border-color:red" onclick="endConsult($('#roomnameCCTConsult').html())") Leave    
+                        span.btn#get_transcript(style="position:relative;right:0px" onclick="getTranscript($('#roomnameCCTConsult').html())") Get Transcript
+                    .row
+                        .scrollable.column#messageDisplayChatCCTConsult(style="width:100%")
+                            ul#messagesChatCCTConsult(style="list-style-type:none")
+                    textarea#chat_messageChatCCTConsult(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submitChatCCTConsult').click();	}", required)
+                    button#chat_submitChatCCTConsult.btn.sub(type="submit" onclick="$('#chat_messageChatCCTConsult').focus()") Send
+                #chatCCTQueue.hiddenDiv
+                    b(style="font-size:12px;") Chat Consult Queue
+                    br
+                    br
+                    #getconsult_div.hiddenDiv
+                        button#getCCTconsult_button(type="submit" onclick="getChatCCTConsult();") Get Consult Request
+                        br
+                        br
+                    span(style="font-size:12px;")
+                        |CCT support available:
+                        span#cctavailchatconsult 0
+                    br
+                    br
+                    
+                    .row
+                        .queue_container.scrollable.column#listDisplayChatCCTConsultQueue(style="width:90%")
+                            span(style="font-size:12px;")
+                                |Experts waiting:
+                            b(style="font-size:12px;")
+                                ul#userlistChatCCTConsultQueue(style="list-style-type:none")
+                #chatCCTCountdown.hiddenDiv
+                    .counterCCTCountdown
+                        .numsCCT
+                            span.in 5
+                            span 4
+                            span 3
+                            span 2
+                            span 1
+                            span 0
+                    br
+                    #room_CCTconsult(style="font-size:12px;position:relative;left:10px;top:0px;")
+                    br
+                    #casenumber_CCTconsult(style="font-size:12px;position:relative;left:10px;top:0px;")
+                    #inquiry_CCTconsult(style="font-size:12px;position:relative;left:10px;top:10px;")
+                #CCTconsult-info
+                    b(style="font-size:12px;") Chat Consult
+                    br
+                    br
+                    .row
+                        .column(style="width:40%")
+                            pre|Case Number:
+                        .column(style="width:60%")
+                            pre
+                            input(type="text", id="consult_CN", style="width:100%")
+                    .row
+                        .column(style="width:40%")
+                            pre|Inquiry:
+                        .column(style="width:60%")
+                            pre
+                            textarea(id="consult_inquiry")
+                    br
+                    button(onclick="L1chatCCTConsultQueue($('#consultCCT_CN').val(),$('#consultCCT_inquiry').val());")
+                        |Consult CCT
+            button.open-buttonCCT(onclick="openFormCCT()") CCT Chat
+                span.badge.hiddenDiv#chatBadgeCCT 0
+            .chat-popup#chatFormCCT
+                form.form-container#formCCTchat(action="")
+                    b(style="font-size:12px;") CCT Chat
+                    span.btn.cancel(onclick="closeFormCCT();",style="border: solid black; border-width: 0 3px 3px 0; display: inline-block; padding: 3px;transform: rotate(45deg); -webkit-transform: rotate(45deg);")
+                    br
+                    .row
+                        .scrollable.column#messageDisplayCCT(style="width:70%")
+                            ul#messagesCCT(style="list-style-type:none")
+                        .scrollable.column#listDisplayCCT(style="width:30%")
+                            ul#chatuserlistCCT(style="list-style-type:none")
+                    br
+                    span(style="color:darkslategray;font-size:10px;text-align:center;") Use this feature responsibly.
+                    br
+                    textarea#chat_messageCCT(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submitCCT').click();	}", required)
+                    button#chat_submitCCT.btn.sub(type="submit" onclick="$('#chat_messageCCT').focus()") Send
+        if userLevel=='2'
+            label.switch_cctconsult
+                b(style="font-size:14px;color:white;z-index:100;right:330px!important;position:fixed")
+                    span.badge.hiddenDiv#chatBadgeChatConsult 0
+                b(style="font-size:14px;color:white;z-index:100;right:265px!important;position:fixed") Consult
+                input(type="checkbox" id="cctavailconsult" onchange="cctconsultchange($('#cctavailconsult').prop('checked'));")
+                span.slider_cctconsult.round_cctconsult
+            .chat-popup#chatFormChatConsult
+                form.form-container.hiddenDiv#formChatConsult(action="")
+                    ul#chatuserlistChatConsult.hiddenDiv(style="list-style-type:none")
+                    span.btn.cancel(onclick="closeFormChatConsult();",style="border: solid black; border-width: 0 3px 3px 0; display: inline-block; padding: 3px;transform: rotate(45deg); -webkit-transform: rotate(45deg);")
+                    b(style="font-size:12px;") Chat Consult: 
+                        span#roomnameConsult
+                    div(style="font-size:12px;")
+                        span.btn#end_chatconsult(style="border-color:red" onclick="endConsult($('#roomnameConsult').html())") Leave    
+                        span.btn#get_transcript(style="position:relative;right:0px" onclick="getTranscript($('#roomnameConsult').html())") Get Transcript
+                    .row
+                        .scrollable.column#messageDisplayChatConsult(style="width:100%")
+                            ul#messagesChatConsult(style="list-style-type:none")
+                    textarea#chat_messageChatConsult(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submitChatConsult').click();	}", required)
+                    button#chat_submitChatConsult.btn.sub(type="submit" onclick="$('#chat_messageChatConsult').focus()") Send
+                #chatQueue.hiddenDiv
+                    b(style="font-size:12px;") Chat Consult Queue
+                    br
+                    br
+                    #getconsult_div.hiddenDiv
+                        button#getconsult_button(type="submit" onclick="getChatConsult();") Get Consult Request
+                        br
+                        br
+                    span(style="font-size:12px;")
+                        |CCT support available:
+                        span#cctavailchatconsult 0
+                    br
+                    br
+                    
+                    .row
+                        .queue_container.scrollable.column#listDisplayChatConsultQueue(style="width:90%")
+                            span(style="font-size:12px;")
+                                |Experts waiting:
+                            b(style="font-size:12px;")
+                                ul#userlistChatConsultQueue(style="list-style-type:none")
+                #chatCountdown.hiddenDiv
+                    .counterCountdown
+                        .nums
+                            span.in 5
+                            span 4
+                            span 3
+                            span 2
+                            span 1
+                            span 0
+                    br
+                    #room_consult(style="font-size:12px;position:relative;left:10px;top:0px;")
+                    br
+                    #casenumber_consult(style="font-size:12px;position:relative;left:10px;top:0px;")
+                    #inquiry_consult(style="font-size:12px;position:relative;left:10px;top:10px;")
+                #consult-info
+                    b(style="font-size:12px;") Chat Consult
+                    br
+                    br
+                    .row
+                        .column(style="width:40%")
+                            pre|Case Number:
+                        .column(style="width:60%")
+                            pre
+                            input(type="text", id="consult_CN", style="width:100%")
+                    .row
+                        .column(style="width:40%")
+                            pre|Inquiry:
+                        .column(style="width:60%")
+                            pre
+                            textarea(id="consult_inquiry")
+                    br
+                    button(onclick="L1chatConsultQueue($('#consult_CN').val(),$('#consult_inquiry').val());")
+                        |Consult CCT
+            button.open-buttonCCT(onclick="openFormCCT()") CCT Chat
+                span.badge.hiddenDiv#chatBadgeCCT 0
+            .chat-popup#chatFormCCT
+                form.form-container#formCCTchat(action="")
+                    b(style="font-size:12px;") CCT Chat
+                    span.btn.cancel(onclick="closeFormCCT();",style="border: solid black; border-width: 0 3px 3px 0; display: inline-block; padding: 3px;transform: rotate(45deg); -webkit-transform: rotate(45deg);")
+                    br
+                    .row
+                        .scrollable.column#messageDisplayCCT(style="width:70%")
+                            ul#messagesCCT(style="list-style-type:none")
+                        .scrollable.column#listDisplayCCT(style="width:30%")
+                            ul#chatuserlistCCT(style="list-style-type:none")
+                    br
+                    span(style="color:darkslategray;font-size:10px;text-align:center;") Use this feature responsibly.
+                    br
+                    textarea#chat_messageCCT(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submitCCT').click();	}", required)
+                    button#chat_submitCCT.btn.sub(type="submit" onclick="$('#chat_messageCCT').focus()") Send
+        if userType=='Chat Trainee'
+            label.switch_trainer
+                b(style="font-size:14px;color:white;z-index:100;right:330px!important;position:fixed")
+                    span.badge.hiddenDiv#chatBadgeChatTrainer 0
+                b(style="font-size:14px;color:white;z-index:100;right:265px!important;position:fixed") Chat Trainer
+                input(type="checkbox" id="availtrainer" onchange="trainerChange($('#availtrainer').prop('checked'));")
+                span.slider_trainer.round_trainer
+            .chat-popup#chatFormChatTrainer2
+                form.form-container.chatTrainerForm2.hiddenDiv#formChatTrainer2(action="")
+                    ul#chatuserlistChatTrainer2.hiddenDiv(style="list-style-type:none")
+                    b(style="font-size:12px;") Chat Trainer Room: 
+                        span#roomnameTrainer2
+                    div(style="font-size:12px;")
+                        span.btn#end_chattrainer2(style="border-color:red" onclick="endTrainer($('#roomnameTrainer2').html(),2)") Leave    
+                        span.btn#get_trainertranscript2(style="position:relative;right:0px" onclick="getTrainerTranscript($('#roomnameTrainer2').html())") Get Transcript
+                    .row
+                        .scrollable.column.chatTrainerScrollable#messageDisplayChatTrainer2(style="width:100%")
+                            ul.chatTrainerMessage#messagesChatTrainer2(style="list-style-type:none")
+                    textarea#chat_messageChatTrainer2(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submitChatTrainer2').click();	}", required)
+                    button#chat_submitChatTrainer2.btn.sub(type="button" onclick="sendMessage(2)") Send
+            .chat-popup#chatFormChatTrainer
+                form.form-container.chatTrainerForm.hiddenDiv#formChatTrainer(action="")
+                    ul#chatuserlistChatTrainer.hiddenDiv(style="list-style-type:none")
+                    b(style="font-size:12px;") Chat Trainer Room: 
+                        span#roomnameTrainer
+                    div(style="font-size:12px;")
+                        span.btn#end_chattrainer(style="border-color:red" onclick="endTrainer($('#roomnameTrainer').html(),1)") Leave    
+                        span.btn#get_trainertranscript(style="position:relative;right:0px" onclick="getTrainerTranscript($('#roomnameTrainer').html())") Get Transcript
+                    .row
+                        .scrollable.column.chatTrainerScrollable#messageDisplayChatTrainer(style="width:100%")
+                            ul.chatTrainerMessage#messagesChatTrainer(style="list-style-type:none")
+                    textarea#chat_messageChatTrainer(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submitChatTrainer').click();	}", required)
+                    button#chat_submitChatTrainer.btn.sub(type="button" onclick="sendMessage(1)") Send
+        if userLOB=='TRAINING ARLO'
+            button.open-buttonChatTrainer(onclick="openFormChatTrainer()") Chat Trainer
+                span.badge.hiddenDiv#chatBadgeChatTrainer 0
+            .chat-popup#chatFormChatTrainer
+                form.form-container.hiddenDiv#formChatTrainer(action="")
+                    ul#chatuserlistChatTrainer.hiddenDiv(style="list-style-type:none")
+                    span.btn.cancel(onclick="closeFormChatTrainer();",style="border: solid black; border-width: 0 3px 3px 0; display: inline-block; padding: 3px;transform: rotate(45deg); -webkit-transform: rotate(45deg);")
+                    b(style="font-size:12px;") Chat Trainer Room: 
+                        span#roomnameTrainer
+                    div(style="font-size:12px;")
+                        span.btn#end_chattrainer(style="border-color:red" onclick="endTrainer($('#roomnameTrainer').html())") Leave    
+                        span.btn#get_trainertranscript(style="position:relative;right:0px" onclick="getTrainerTranscript($('#roomnameTrainer').html())") Get Transcript
+                    .row
+                        .scrollable.column.chatTrainerScrollable#messageDisplayChatTrainer(style="width:100%")
+                            ul.chatTrainerMessage#messagesChatTrainer(style="list-style-type:none")
+                    textarea#chat_messageChatTrainer(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submitChatTrainer').click();	}", required)
+                    button#chat_submitChatTrainer.btn.sub(type="submit" onclick="$('#chat_messageChatTrainer').focus()") Send
+                #chatTrainerQueue.hiddenDiv
+                    b(style="font-size:12px;") Chat Trainer Queue
+                    br
+                    br
+                    #gettrainer_div.hiddenDiv
+                        button#gettrainer_button(type="submit" onclick="getChatTrainer();") Get Trainer Request
+                        br
+                        br
+                    span(style="font-size:12px;")
+                        |Chat support available:
+                        span#availchattrainer 0
+                    br
+                    br
+                    
+                    .row
+                        .queue_container.scrollable.column#listDisplayChatTrainerQueue(style="width:90%")
+                            span(style="font-size:12px;")
+                                |Customers waiting:
+                            b(style="font-size:12px;")
+                                ul#userlistChatTrainerQueue(style="list-style-type:none")
+                #trainer-info
+                    b(style="font-size:12px;") Chat Trainer
+                    br
+                    br
+                    .row
+                        .column(style="width:40%")
+                            pre|First Name*:
+                        .column(style="width:60%")
+                            pre
+                            input(type="text", id="trainer_FN", style="width:100%")
+                    .row
+                        .column(style="width:40%")
+                            pre|Last Name*:
+                        .column(style="width:60%")
+                            pre
+                            input(type="text", id="trainer_LN", style="width:100%")
+                    .row
+                        .column(style="width:40%")
+                            pre|E-mail*:
+                        .column(style="width:60%")
+                            pre
+                            input(type="text", id="trainer_email", style="width:100%")
+                    .row
+                        .column(style="width:40%")
+                            pre|Product*:
+                        .column(style="width:60%")
+                            pre
+                            input(type="text", id="trainer_product", style="width:100%")
+                    .row
+                        .column(style="width:40%")
+                            pre|SubProduct*:
+                        .column(style="width:60%")
+                            pre
+                            input(type="text", id="trainer_subproduct", style="width:100%")
+                    br
+                    button(onclick="chatTrainerQueue($('#trainer_FN').val(),$('#trainer_LN').val(),$('#trainer_email').val(),$('#trainer_product').val(),$('#trainer_subproduct').val());")
+                        | Chat with an Expert
+        if userType=='Chat' || userType=='OTS'
+            button.open-buttonChatConsult(onclick="openFormChatConsult()") Chat Consult
+                span.badge.hiddenDiv#chatBadgeChatConsult 0
+            .chat-popup#chatFormChatConsult
+                form.form-container.hiddenDiv#formChatConsult(action="")
+                    ul#chatuserlistChatConsult.hiddenDiv(style="list-style-type:none")
+                    span.btn.cancel(onclick="closeFormChatConsult();",style="border: solid black; border-width: 0 3px 3px 0; display: inline-block; padding: 3px;transform: rotate(45deg); -webkit-transform: rotate(45deg);")
+                    b(style="font-size:12px;") Chat Consult: 
+                        span#roomnameConsult
+                    div(style="font-size:12px;")
+                        span.btn#end_chatconsult(style="border-color:red" onclick="endConsult($('#roomnameConsult').html())") Leave    
+                        span.btn#get_transcript(style="position:relative;right:0px" onclick="getTranscript($('#roomnameConsult').html())") Get Transcript
+                    .row
+                        .scrollable.column#messageDisplayChatConsult(style="width:100%")
+                            ul#messagesChatConsult(style="list-style-type:none")
+                    textarea#chat_messageChatConsult(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submitChatConsult').click();	}", required)
+                    button#chat_submitChatConsult.btn.sub(type="submit" onclick="$('#chat_messageChatConsult').focus()") Send
+                #chatQueue.hiddenDiv
+                    b(style="font-size:12px;") Chat Consult Queue
+                    br
+                    br
+                    span(style="font-size:12px;")
+                        |CCT support available:
+                        span#cctavailchatconsult 0
+                    br
+                    br
+                    
+                    .row
+                        .queue_container.scrollable.column#listDisplayChatConsultQueue(style="width:90%")
+                            span(style="font-size:12px;")
+                                |Experts waiting:
+                            b(style="font-size:12px;")
+                                ul#userlistChatConsultQueue(style="list-style-type:none")
+                #chatCountdown.hiddenDiv
+                    #chatCountdown.hiddenDiv
+                    .counterCountdown
+                        .nums
+                            span.in 5
+                            span 4
+                            span 3
+                            span 2
+                            span 1
+                            span 0
+                    br
+                    #room_consult(style="font-size:12px;position:relative;left:10px;top:0px;")
+                    br
+                    #casenumber_consult(style="font-size:12px;position:relative;left:10px;top:0px;")
+                    #inquiry_consult(style="font-size:12px;position:relative;left:10px;top:10px;")
+                #consult-info
+                    b(style="font-size:12px;") Chat Consult
+                    br
+                    br
+                    .row
+                        .column(style="width:40%")
+                            pre|Case Number 
+                        .column(style="width:60%")
+                            pre
+                            input(type="text", id="consult_CN", style="width:100%;font-stretch:condensed")
+                    .row
+                        pre|Inquiry 
+                        pre
+                        textarea(id="consult_inquiry" style="font-stretch:condensed" rows="10")
+                    br
+                    button(onclick="L1chatConsultQueue($('#consult_CN').val(),$('#consult_inquiry').val());")
+                        |Consult CCT
+
+        button.open-button(onclick="openForm()") Arlo Chat
+            span.badge.hiddenDiv#chatBadge 0
+        .chat-popup#chatForm
+            form.form-container#formchat(action="")
+                b(style="font-size:12px;") Arlo Chat
+                span.btn.cancel(onclick="closeForm();",style="border: solid black; border-width: 0 3px 3px 0; display: inline-block; padding: 3px;transform: rotate(45deg); -webkit-transform: rotate(45deg);")
+                br
+                .row
+                    .scrollable.column#messageDisplay(style="width:70%")
+                        ul#messages(style="list-style-type:none")
+                    .scrollable.column#listDisplay(style="width:30%")
+                        ul#chatuserlist(style="list-style-type:none")
+                br
+                span(style="color:darkslategray;font-size:10px;text-align:center;") Use this feature responsibly.
+                br
+                textarea#chat_message(placeholder="Type message..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submit').click();	}", required)
+                button#chat_submit.btn.sub(type="submit") Send
+        if(userType=='RTA')
+
+        else
+            button.open-aux(onclick="openAux()") Aux R
+                span.badge.hiddenDiv#auxBadge 0
+            .chat-popup#auxForm
+                form.form-container#formaux(action="")
+                    b(style="font-size:12px;") Aux Request
+                    span.btn.cancel(onclick="closeAux();",style="border: solid black; border-width: 0 3px 3px 0; display: inline-block; padding: 3px;transform: rotate(45deg); -webkit-transform: rotate(45deg);")
+                    br
+                    br
+                    label.switch
+                        input(type="radio" name="auxType" value="Aux60" checked)
+                        div.slider 
+                    span.auxLabel Aux 60
+                    br
+                    label.switch
+                        input(type="radio" name="auxType" value="Aux15")
+                        div.slider 
+                    span.auxLabel Aux 15
+                    br
+                    label.switch
+                        input(type="radio" name="auxType" value="Pbreak")
+                        div.slider 
+                    span.auxLabel Personal Break
+                    br
+                    label.switch
+                        input(type="radio" name="auxType" value="CCTConsult")
+                        div.slider 
+                    span.auxLabel CCT Consult
+                    br
+                    label.switch
+                        input(type="radio" name="auxType" value="Outbound")
+                        div.slider 
+                    span.auxLabel Outbound
+                    br
+                    br
+                    button(onclick="var dt=new Date(); var time = ((dt.getHours()).toString().length<2?('0'+(dt.getHours()).toString()):(dt.getHours()).toString()) + ':' + ((dt.getMinutes()).toString().length<2?('0'+(dt.getMinutes()).toString()):(dt.getMinutes()).toString()) + ':' + ((dt.getSeconds()).toString().length<2?('0'+(dt.getSeconds()).toString()):(dt.getSeconds()).toString()); console.log(time);$('#auxTime').val(time)" type="button") Now
+                    input(type="time",id="auxTime",name="auxTime",step="1")
+                    br
+                    br
+                    textarea#aux_message(placeholder="Request message to RTA..", name="msg", onkeydown="if (event.keyCode === 13) {event.preventDefault();	$('#chat_submit').click();	}")
+                    button#aux_submit.btn.sub(type="submit") >RTA
+                    #auxDisplay(style="height:148px;overflow-y:auto")
+                        ul#auxList(style="list-style-type:none;")
+        
+    if(userType=='RTA')
+        .navbar
+            a#modal_btn_comment(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
+            a#modal_btn_comment(href='#', style='float:right', onclick="$('#modal_comment').css('display','block');") Comment
+            a#btn_updates(href='#', style='float:right', onclick="getUpdates(function(html){$('#modal_update_list_table').html(html);$('#modal_update_list').css('display','block');updateCounter=0;$('#updateBadge').addClass('hiddenDiv');});")
+                | Updates
+                span#updateBadge.updatebadge.hiddenDiv 0
+        #background
+        .footer
+    if((userLOB=='CCT ARLO')||(userLOB=='OS ARLO')||(userLOB=='CCT/OS ARLO')||(userLOB=='CCT IOPEX')||(userLOB=='OS IOPEX'))
+        .navbar
+            include /partials/process.html
+            a#modal_btn_comment(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
+            a#modal_btn_comment(href='#', style='float:right', onclick="$('#modal_comment').css('display','block');") Comment
+            a#btn_updates(href='#', style='float:right', onclick="getUpdates(function(html){$('#modal_update_list_table').html(html);$('#modal_update_list').css('display','block');updateCounter=0;$('#updateBadge').addClass('hiddenDiv');});")
+                | Updates
+                span#updateBadge.updatebadge.hiddenDiv 0
+            a(href='#', style='float:right', onclick="loadExternal('/partials/dashboard','dashboardScript')")
+                |Dashboard
+                span#updateBadge.updatebadge.hiddenDiv 0
+        .footer
+            a(href='#' onclick="window.open('https://ph-wings.herokuapp.com/arlee','Arlee Bird', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1000,height=600,top='+300+',right='+300);")
+                img(src='/assets/img/arlee/icon.png' height="30px")
+        #background
+        include /partials/modals.html
+    else if(userLOB=='L1 IOPEX')
+        .navbar
+            
+            include /partials/advanced.html
+            include /partials/modals.html  
+            a#modal_btn_comment(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
+            a#modal_btn_comment(href='#', style='float:right', onclick="$('#modal_comment').css('display','block');") Comment
+            a#btn_updates(href='#', style='float:right', onclick="getUpdates(function(html){$('#modal_update_list_table').html(html);$('#modal_update_list').css('display','block');updateCounter=0;$('#updateBadge').addClass('hiddenDiv');});")
+                | Updates
+                span#updateBadge.updatebadge.hiddenDiv 0
+            a(href='#', style='float:right', onclick="loadExternal('/partials/dashboard','dashboardScript')")
+                |Dashboard
+                span#updateBadge.updatebadge.hiddenDiv 0
+        .footer
+            a(href='#' onclick="window.open('https://ph-wings.herokuapp.com/arlee','Arlee Bird', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1000,height=600,top='+300+',right='+300);")
+                img(src='/assets/img/arlee/icon.png' height="30px")
+        #background
+    else if(userCES=='8000')
+        .navbar
+            include /partials/setupAndGuides.html
+            include /partials/troubleshooting.html
+            include /partials/references.html
+            include /partials/templates.html
+            include /partials/videodoorbell.html
+            if userLevel==2
+                include /partials/advanced.html
+            else
+                include /partials/advanced.html
+                
+            a#modal_btn_comment(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
+            a#modal_btn_comment(href='#', style='float:right', onclick="$('#modal_comment').css('display','block');") Comment
+            a#btn_updates(href='#', style='float:right', onclick="getUpdates(function(html){$('#modal_update_list_table').html(html);$('#modal_update_list').css('display','block');updateCounter=0;$('#updateBadge').addClass('hiddenDiv');});")
+                | Updates
+                span#updateBadge.updatebadge.hiddenDiv 0
+            a(href='#', style='float:right', onclick="loadExternal('/partials/dashboard','dashboardScript')")
+                |Dashboard
+                span#updateBadge.updatebadge.hiddenDiv 0
+        .footer
+            a(href='#' onclick="window.open('https://ph-wings.herokuapp.com/arlee','Arlee Bird', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1000,height=600,top='+300+',right='+300);")
+                img(src='/assets/img/arlee/icon.png' height="30px")
+        #background
+        include /partials/modals.html 
+    else
+        .navbar
+            include /partials/setupAndGuides.html
+            include /partials/troubleshooting.html
+            include /partials/references.html
+            include /partials/templates.html
+            include /partials/videodoorbell.html
+            include /partials/performance.html
+            if userLevel==2
+                include /partials/advanced.html
+            else
+                include /partials/advanced.html
+                
+            a#modal_btn_comment(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
+            a#modal_btn_comment(href='#', style='float:right', onclick="$('#modal_comment').css('display','block');") Comment
+            a#btn_updates(href='#', style='float:right', onclick="getUpdates(function(html){$('#modal_update_list_table').html(html);$('#modal_update_list').css('display','block');updateCounter=0;$('#updateBadge').addClass('hiddenDiv');});")
+                | Updates
+                span#updateBadge.updatebadge.hiddenDiv 0
+            a(href='#', style='float:right', onclick="loadExternal('/partials/dashboard','dashboardScript')")
+                |Dashboard
+                span#updateBadge.updatebadge.hiddenDiv 0
+        .footer
+            a(href='#' onclick="window.open('https://ph-wings.herokuapp.com/arlee','Arlee Bird', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1000,height=600,top='+300+',right='+300);")
+                img(src='/assets/img/arlee/icon.png' height="30px")
+        #background
+        include /partials/modals.html  
+    
+    #content
+        include /partials/notice.html
+        //include /partials/survey.html
+        //script.
+        //    eval($('#surveyScript').text());
+        script.
+            eval($('#noticeScript').text());
+
+        if(userCC=="Concentrix SUM 2.0 Davao")
+            include /partials/surveyCNX.html
+            script.
+                eval($('#surveyCNXScript').text());
+        if(userType=='RTA')
+            include /partials/RTA.html
+        else if (userLOB=='CCT ARLO') 
+            include /partials/dashboard.html
+            script.
+                eval($('#dashboardScript').text());
+        else if (userLOB=='OS ARLO') 
+            include /partials/dashboard.html
+            script.
+                eval($('#dashboardScript').text());
+        else if (userLOB=='CCT/OS ARLO') 
+            include /partials/dashboard.html
+            script.
+                eval($('#dashboardScript').text());
+        else
+            include /partials/dashboard.html
+            script.
+                eval($('#dashboardScript').text());
+            #rtaMessage 
+                #rtaMessageClose.blink-bg(onclick="$('rtaMessage').fadeOut()" style="text-align:right") X
+                h5(style="color:black;background-color:gold;font-size:20px;text-align:center;margin:0px;padding:10px;width:auto;height:30px") Message from RTA
+                #rtaMessageText.blink-bg
+    
+        
+    #rtaPopup
+        #rtaClose(onclick="$('#rtaPopup').fadeOut()" style="text-align:right") Close
+        #rtaLongCall(onclick="sendMessageExpert('Long Call')") Long Call
+        #rtaClearAfterCall(onclick="sendMessageExpert('Clear Aftercall')") Clear After Call
+        #rtaClearOutbound(onclick="sendMessageExpert('Clear Outbound')") Clear Outbound
+        #rtaRefused(onclick="sendMessageExpert('Clear Refused')") Clear Refused
+        #rtaTechnical(onclick="sendMessageExpert('Clear Technical')") Clear Technical
+        #rtaUnavailable(onclick="sendMessageExpert('Clear Unavailable')") Clear Unavailable
+        #rtaLongHold(onclick="sendMessageExpert('Long Hold')") Long Hold
+
+
+    //script(src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBtvTP2iB2UPrK27kMlIbPck6GiHNQgeOI&libraries=places&callback=initAutocomplete', async='', defer='')
+//    b
+                    -//    | Welcome 
+                    -//     span#dashboard_expertname
+                    -//    | !
+                    
+                    -//include /partials/dashboard.html
+                    -//script.
+                        -//eval($('#dashboardScript').text())  

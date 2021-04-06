@@ -1,0 +1,348 @@
+doctype html
+html
+    head
+        meta(name='viewport' content='width=device-width, initial-scale=1')
+        link(rel='stylesheet', href='/assets/css/index.css')
+        link(rel='stylesheet', href='//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css')
+        link(rel='stylesheet', href='//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css')
+        script(src='/assets/js/jquery-3.4.1.min.js')
+        script(src='/assets/js/socket/socket.io.js')
+        script(src='/assets/js/createjs-2013.09.25.min.js')
+                
+        script(src='/assets/js/jquery.mark.min.js')
+        script(src='/assets/js/jqueryui/jquery-ui.js')
+        script(src='/assets/js/index.js')
+    - try{var userCC = JSON.parse(userdetails).users_CC;var userCES = JSON.parse(userdetails).users_CES;var userLOB = JSON.parse(userdetails).users_LOB; var userLevel = JSON.parse(userdetails).users_type.substr(6,1);var userType = JSON.parse(userdetails).users_type=='RTA'?'RTA':JSON.parse(userdetails).users_type.substr(8);var userAlias = JSON.parse(userdetails).users_alias;}catch(error){loadEmergency()}
+    body(onload="expertName=getCookie('expertname');")
+        .container
+            .sidebar-container
+                .sidebar
+            .navbar
+                a#consult-new(href='#')
+                    i.fa.fa-fw.fa-envelope
+                    |  New Consult
+                if((userLevel!='2')&&(userType!='TM'))
+                    a#rma-new(href='#')
+                        i.fa.fa-fw.fa-envelope
+                        |  RMA Approval
+                a.queue-button(href='#' onclick='showQueue();')
+                    i.fa.fa-fw.fa-search
+                    |  Queue
+                a.lobby-button(href='#' onclick='showLobby();')
+                    i.fa.fa-fw.fa-search
+                    |  Lobby
+            .queue-container.subcontainer
+                .queue-window.l2-dashboard
+                    .title L2 Consult
+                    span.get-consult.get-consult-l2.button-link(onclick="getConsult('l2');") Get Consult
+                    .waiting-label Waiting Experts:
+                    .waiting-list
+                    br
+                    .available-label Available L2:
+                    .available-list
+                .queue-window.cct-dashboard
+                    .title CCT Consult
+                    span.get-consult.get-consult-cct.button-link(onclick="getConsult('cct');") Get Consult
+                    .waiting-label Waiting Experts:
+                    .waiting-list
+                    br
+                    .available-label Available CCT:
+                    .available-list
+                .queue-window.rma-dashboard
+                    .title RMA Consult
+                    span.get-consult.get-consult-rma.button-link(onclick="getConsult('l2');") Get Consult
+                    .waiting-label Waiting Experts:
+                    .waiting-list
+                    br
+                    .available-label Available L2/TM:
+                    .available-list
+                .queue-window.ongoing-dashboard
+                    .title Ongoing Consults
+                    br
+                    .ongoing-list
+            .lobby-container.subcontainer
+                .lobby-window.voice-online
+                    .title Voice Experts
+                    .online-label L1 Online:
+                    #L1Voice.online-list
+                    br
+                    .online-label L2 Online:
+                    #L2Voice.online-list
+                    br
+                    .online-label Order Support Team Online:
+                    #OSVoice.online-list
+                    br
+                    .online-label Customer Care Team Online:
+                    #CCTVoice.online-list
+                .lobby-window.nonvoice-online
+                    .title Non-Voice Experts
+                    .online-label Chat:
+                    #L1Chat.online-list
+                    br
+                    .online-label OTS:
+                    #L1OTS.online-list
+                .lobby-window.support-online
+                    .title Support
+                    .online-label TM Online:
+                    #TM.online-list
+                    br
+                    .online-label SME Online:
+                    #SME.online-list
+        .chat-popup
+            | Initiate Chat
+        #consult-entry.modal
+            .modal-content
+                span#consult-close.close &times;
+                .row
+                    .column 
+                        | L2 Consult 
+                        label.switch
+                            input#consult-entry-type(type='checkbox')
+                            span.slider.round
+                        | &nbsp;CCT Consult 
+                .row
+                    .column
+                        | Case Number: 
+                        br
+                        input#consult-entry-casenumber.consult-entry-input(type='text' size='8' maxlength='8' onkeypress='return event.charCode >= 48 && event.charCode <= 57')
+                    .column
+                        | Device: 
+                        br
+                        select#consult-entry-device(style='width:100%')
+                            option.selectheader(value='0' selected='' disabled='disabled') Loading devices
+                .row
+                    .column
+                        | Reason for Consult: 
+                        br
+                        select#consult-entry-reason(style='width:100%')
+                            option.selectheader(value='0' selected='' disabled='disabled') Select Reason
+                            option(value='RMA Recommendation') RMA Recommendation
+                            option(value='Technical - Device Functionality/Features') Technical - Device Functionality/Features
+                            option(value='Technical - Installation') Technical - Installation
+                            option(value='Technical - Login Issues') Technical - Login Issues
+                            option(value='Technical - Web/App') Technical - Web/App
+                            option(value='Technical - 3rd Party Integration') Technical - 3rd Party Integration
+                            option(value='Process - ATR') Process - ATR
+                            option(value='Process - Safety and Hazard') Process - Safety and Hazard
+                            option(value='Process - Litigation and Hold') Process - Litigation and Hold
+                            option(value='Process - Video Retrieval') Process - Video Retrieval
+                            option(value='Subscription - Functional') Subscription - Functional
+                            option(value='Subscription - Transactional') Subscription - Transactional
+                            option(value='Subscription - Promo') Subscription - Promo
+                .row
+                    .column
+                        | Summary: 
+                        br
+                        textarea#consult-entry-summary(rows='10')
+                .row
+                    .consult-entry-request.button-link(onclick='requestConsult();') Request Consult
+                    .consult-entry-clear.button-link(onclick='clearConsultForm();') Clear Form
+                .row
+                    #consult-entry-error.column.hiddenDiv Missing details. Please complete.
+        #rma-entry.modal
+            .modal-content
+                span#rma-close.close &times;
+                .row
+                    .column
+                        | Case Number: 
+                        br
+                        input#rma-entry-casenumber.rma-entry-input(type='text' size='8' maxlength='8' onkeypress='return event.charCode >= 48 && event.charCode <= 57')
+                    .column
+                        | Device: 
+                        br
+                        select#rma-entry-device(style='width:100%')
+                            option.selectheader(value='0' selected='' disabled='disabled') Select Device
+                .row
+                    .column
+                        input(type='checkbox')
+                        |  Address updated
+                    .column
+                        input(type='radio' name='warranty' value='IW' checked='checked')
+                        |  In-warranty
+                .row
+                    .column
+                        input(type='checkbox')
+                        |  Phone Number updated
+                    .column
+                        input(type='radio' name='warranty' value='OOW')
+                        |  Out-of-Warranty
+                .row
+                    .column
+                        input(type='checkbox')
+                        |  POP update
+                .row
+                    .column
+                        | Summary: 
+                        br
+                        textarea#consult-entry-summary(rows='10')
+                .row
+                    .consult-entry-request.button-link(onclick='requestConsult();') Request Consult
+                    .consult-entry-clear.button-link(onclick='clearConsultForm();') Clear Form
+                .row
+                    #consult-entry-error.column.hiddenDiv Missing details. Please complete.
+        .templates
+            .consult-container-template
+                .message-options
+                    .message-options-transcript.button-link Get Transcript
+                    .message-options-close.button-link Close Consult
+                .log-screen
+                    input#consult_id(type='text' hidden='')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Case Number:
+                        .column
+                            input#consult_casenumber(type='text' style='width:100%')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Escalated to:
+                        .column
+                            input#L2_list_consult.L2_list.consult(style='width:100%' readonly='')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Escalated by:
+                        .column
+                            select#L1_list_consult_source.L1_list.consult(style='width:100%' onchange="getTM($('#L1_list_consult_source').val(),function(TMname,TMCES){$('#consult_TM').val('');$('#consult_TM').val(TMname);$('#consult_TM').attr('data-tm',TMCES)});")
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Reason of Consult:
+                        .column
+                            select#consult_invalidreason(style='width:100%')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Followed Call Handler:
+                        .column
+                            label(style='font-size:10pt;')
+                            input(type='radio' name='consult_callhandler' value='Yes' style='vertical-align: bottom;margin-top:0px')
+                            |  Yes
+                            label(style='font-size:10pt;')
+                            input(type='radio' name='consult_callhandler' value='No' style='vertical-align: bottom;margin-top:0px')
+                            |  No
+                            label(style='font-size:10pt;')
+                            input#consult_callhandler_na(type='radio' name='consult_callhandler' value='NA' style='vertical-align: bottom;margin-top:0px' checked='')
+                            |  Not Applicable
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Duration:
+                        .column
+                            input#consult_duration.duration.consult(style='width:100%')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Reason for Long Consult:
+                        .column
+                            textarea#consult_durationreason(style='width:100%' rows='5')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Select Device:
+                        .column
+                            select#consult_product.consult(style='width:100%')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Expert&apos;s Opportunity:
+                        .column
+                            select#consult_opportunity1(style='width:100%')
+                                option(value='Technical') Technical
+                                option(value='Comms') Comms
+                                option(value='Others') Others
+                            br
+                            textarea#consult_opportunity2(style='width:100%' rows='5')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Team Manager:
+                        .column
+                            input#consult_TM(type='text' style='width:100%' readonly='')
+                    br
+                    span.consult_add
+                        button#save_consult_button(onclick="save_consult(\
+                        $('#L1_list_consult_source'),\
+                        JSON.parse(getCookie('userdetails')).users_CES,\
+                        $('#consult_casenumber'),\
+                        $('#consult_product'),\
+                        $('#consult_duration'),\
+                        $('#consult_durationreason'),\
+                        $('#consult_invalidreason'),\
+                        $('input[name=consult_callhandler]:checked'),\
+                        $('#consult_opportunity1'),\
+                        $('#consult_opportunity2'),\
+                        $('#consult_feedback'),\
+                        $('#consult_commitment'),\
+                        new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));$('#save_consult_button').attr('disabled','true');")
+                        | Save
+                    span.consult_edit.hiddenDiv
+                        button(onclick="update_consult(\
+                        $('#consult_id').val(),\
+                        $('#L1_list_consult_source').val(),\
+                        JSON.parse(getCookie('userdetails')).users_CES,\
+                        $('#consult_casenumber').val(),\
+                        $('#consult_product').val(),\
+                        $('#consult_duration').val(),\
+                        $('#consult_durationreason').val(),\
+                        $('#consult_invalidreason').val(),\
+                        $('#consult_opportunity1').val(),\
+                        $('#consult_opportunity2').val(),\
+                        $('#consult_feedback').val(),\
+                        $('#consult_commitment').val(),\
+                        new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));")
+                        | Update
+                    br
+                    br
+                    #consult_status
+                .consult-bar
+                    span.consult-file-button.button-link
+                        i.fa.fa-fw.fa-paperclip
+                    span.consult-send-button.button-link
+                        i.fa.fa-fw.fa-send-o
+                    textarea.consult-input(rows='5')
+            .consult-link-template
+            .chat-container-template
+                .message-options
+                    .message-options-close.button-link Close Chat
+                .chat-bar
+                    span.chat-file-button.button-link
+                        i.fa.fa-fw.fa-paperclip
+                    span.chat-send-button.button-link
+                        i.fa.fa-fw.fa-send-o
+                    textarea.chat-input(rows='5')
+            .chat-link-template
+            .team-container-template
+                .message-options
+                    span.message-options-close.button-link Close Chat
+                    span.message-options-setpin.button-link Set Team Message
+                    span.message-options-online.button-link
+                        | Show online
+                        i.fa.fa-fw.fa-caret-down.team-online-arrow
+                    .message-options-team-online
+                    .message-options-pinned
+                .team-bar
+                    span.team-file-button.button-link
+                        i.fa.fa-fw.fa-paperclip
+                    span.team-send-button.button-link
+                        i.fa.fa-fw.fa-send-o
+                    textarea.team-input(rows='5')
+            .team-link-template
+            .message-template
+                .message-name
+                .message
+                .message-info
+                    span.message-status
+                    span.message-time
+            .queue-window-template
+                .title
+                .available_label
+                .available_list
+                .ongoing_label
+                .ongoing_list
+            .online-list-item-template
+                img.online-list-item-lob(src='lob-icons.png')
+                span.online-list-item-name
+            .available-list-item-template
+                img.available-list-item-lob(src='lob-icons.png')
+                span.available-list-item-name
+            .waiting-list-item-template
+                img.waiting-list-item-lob(src='lob-icons.png')
+                span.waiting-list-item-name
+            .ongoing-list-item-template
+                .ongoing-list-item-duration 00:00:00
+                .ongoing-list-item-type
+                .ongoing-list-item-room
+                .ongoing-list-item-consultant
+                .ongoing-list-item-expert

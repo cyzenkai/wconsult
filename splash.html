@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="/assets/font/css/fontawesome.css"/>
+<link rel="stylesheet" href="/assets/font/css/solid.css"/>
+<style>
+body {font-family: Arial, Helvetica, sans-serif;}
+
+/* Full-width input fields */
+input[type=number],input[type=text], input[type=password] {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+/* Set a style for all buttons */
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  border-radius:10px;
+}
+
+button.landing{
+    width:90px!important;
+
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+/* Extra styles for the cancel button */
+.cancelbtn {
+  width: auto;
+  padding: 10px 18px;
+  background-color: #f44336;
+}
+
+/* Center the image and position the close button */
+.imgcontainer {
+  text-align: center;
+  margin: 24px 0 12px 0;
+  position: relative;
+}
+
+img.avatar {
+  width: 40%;
+  border-radius: 50%;
+}
+
+.container {
+  padding: 16px;
+}
+
+span.psw {
+  float: right;
+  padding-top: 16px;
+}
+
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  padding-top: 60px;
+  
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 5% auto 15% auto; /* 5% from the top, 15% from the bottom and centered */
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+  max-width:400px;
+}
+
+/* The Close Button (x) */
+.close {
+  position: absolute;
+  right: 25px;
+  top: 0;
+  color: #000;
+  font-size: 35px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: red;
+  cursor: pointer;
+}
+
+/* Add Zoom Animation */
+.animate {
+  -webkit-animation: animatezoom 0.6s;
+  animation: animatezoom 0.6s
+}
+
+.hiddenDiv{
+    display:none;
+}
+
+.animateslidedown{
+    overflow: hidden;
+    transition: all 0.5s ease-in;
+    height:auto;
+    max-height:600px;
+    display:block;
+    color: black;
+    opacity:1;
+}
+
+.animateslideup{
+    overflow: hidden;
+    transition: all 1s ease-out;
+    max-height:0;
+    color: transparent;
+    opacity:0;
+}
+
+.error{
+    color:red;
+}
+
+.field-icon {
+  float: right;
+  padding-right: 11px;
+  margin-top: -35px;
+  position: relative;
+  z-index: 2;
+  color:gray;
+}
+
+@-webkit-keyframes animatezoom {
+  from {-webkit-transform: scale(0)} 
+  to {-webkit-transform: scale(1)}
+}
+  
+@keyframes animatezoom {
+  from {transform: scale(0)} 
+  to {transform: scale(1)}
+}
+
+/* Change styles for span and cancel button on extra small screens */
+@media screen and (max-width: 300px) {
+  span.psw {
+     display: block;
+     float: none;
+  }
+  .cancelbtn {
+     width: 100%;
+  }
+}
+
+.top_table{
+  max-width:100%;
+  background-color:white;
+}
+
+.top_stats{
+  background-color:green;
+  color:white;
+  font-size:34px!important;
+  font-weight: bold;
+}
+.top_table>tr>td{
+  padding:1px;
+}
+
+.top_table>tr>th{
+  padding:1px;
+}
+
+.top_table>tr{
+  font-size:18px;
+  font-weight: bold;
+}
+
+.top_performers_label, .top_stat_label{
+  padding:10px;
+  color:white;
+  font-weight: bolder;
+  position:absolute;
+  top:0;
+  font-size:48px;
+}
+.top_performers_label{
+ left:0; 
+ width:100%;
+ background-color:#3a64b5;
+}
+
+.stat_div h5{
+  font-size:20px;
+  background-color:#080e68;
+  margin:0px;
+  color:white;
+}
+
+.MTDheader{
+  background-color:#520726!important;
+}
+
+.top_stat_label{
+  background-color:#b58610;
+  text-align:right;
+  right:0;
+}
+
+.top_table>tr>td:nth-child(n+2){
+  text-align:center;
+  width:15%;
+}
+
+.hidden {
+    display:none; 
+}
+
+#stat_div_container{
+    background-color:white;
+}
+</style>
+<script src="/assets/js/jquery-3.4.1.min.js"></script>
+</head>
+<body>
+    <div style="text-align:center">
+    
+    <br><br><br>
+
+
+    Don't have an account yet?<br>
+    <button class="landing" onclick="opensignup()" style="width:auto;">Sign Up</button class="landing"><br><br><br><br>
+    Already have an account?<br>
+    <button class="landing" onclick="$('#login').css('display','block')" style="width:auto;">Login</button><br><br><br><br>
+    <!--In a rush? Sign up later.<br>
+    <button class="landing" onclick="window.open('wings_enhanced/','_self')" style="width:auto;">Fly</button class="landing">-->
+</div>
+
+<div id="login" class="modal">
+  
+    <form class="modal-content animate" id="loginform">
+        <div class="imgcontainer">
+        <span onclick="$('#login').css('display','none')" class="close" title="Close Modal">&times;</span>
+        <img src="/assets/img/img_avatar2.png" alt="Avatar" class="avatar">
+        </div>
+
+        <div class="container">
+        <label for="uname"><b>CES ID</b></label>
+        <input type="number" placeholder="Enter CES ID" id="uname" required>
+
+        <label for="loginpsw"><b>Password</b></label>
+        <input type="password" placeholder="Enter Password" id="loginpsw" required>
+            
+        <button type="submit" onclick="loginuser($('#uname').val(),$('#loginpsw').val());">Login</button>
+        <label class="hiddenDiv">
+            <input type="checkbox" checked="checked" id="remember"> Remember me
+        </label>
+        <div class="animateslideup error" id="loginerror">
+            Incorrect CES ID or password combination. Please try again.
+        </div>
+        </div>
+        
+        <div class="container" style="background-color:#f1f1f1">
+        <button type="button" onclick="$('#login').css('display','none')" class="cancelbtn">Cancel</button>
+        <span class="forgotpsw hiddenDiv">Forgot <a href="#">password?</a></span>
+        </div>
+    </form>
+</div>
+
+<div id="signup" class="modal">
+    <form class="modal-content animate" id="verifyform">
+    <div class="imgcontainer animate">
+        <span onclick="$('#signup').css('display','none');" class="close" title="Close Modal">&times;</span>
+    </div>
+    
+    
+      <div class="container">
+        <h1>Sign Up</h1>
+
+        <div class="animateslidedown" id="verify">
+            <p>Verify user information</p>
+            <hr>
+            <label for="CES"><b>CES Number</b></label>
+            <input type="number" placeholder="Enter CES" id="CES" required>
+
+            <label for="MN"><b>Middle Name</b></label>
+            <input type="text" placeholder="Enter middle name" id="MN" style="text-transform: uppercase;" required>
+            <input type="hidden" name="action" value="verification">
+            <button type="submit" class="signupbtn" onclick="verify();" value="verification">Verify</button>
+            <div class="animateslideup error" id="verifyerror">
+                User not found. Please verify information entered. <br>Enter special characters such as Ñ as is. <br>If details are already correct, kindly contact the Administrator.
+            </div>
+        </div>
+
+        
+        
+    </form>
+    <form class="animate" id="signupform">
+    <div class="animateslideup" id="signuppassword">
+
+        
+            <label for="alias"><b>Alias</b></label>
+            <input type="text" placeholder="Enter name used during calls" id="alias" required>
+
+            <label for="psw"><b>Enter New Password</b></label>
+            <div>
+                <input type="password" placeholder="Enter password" id="psw" required>
+                <span toggle="#psw" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+            </div>
+    
+            <label for="psw-repeat"><b>Repeat New Password</b></label>
+            <div>
+                <input type="password" placeholder="Repeat password" id="psw-repeat" required>
+                <span toggle="#psw-repeat" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+            </div>
+
+            <label class="hiddenDiv">
+            <input type="checkbox" checked="checked" name="remember" style="margin-bottom:15px"> Remember me
+            </label>
+    
+            <p class="hiddenDiv">By creating an account you agree to our <a href="#" style="color:dodgerblue">Terms & Privacy</a>.</p>
+    
+            <div class="clearfix">
+                <button type="button" onclick="$('#signup').css('display','none')" class="cancelbtn">Cancel</button>
+                <input type="hidden" name="action" value="signingup">
+                <button type="submit" class="signupbtn" value="signingup" onclick="signupuser();">Sign Up</button>
+                <div class="animateslideup error" id="signuperror">
+                    Passwords do not match. Please try again.
+                </div>
+                <div class="animateslideup error" id="signuperror-server">
+                    Server error. Please contact administrator.
+                </div>
+           
+            </div>
+        
+    </div>
+
+</form>
+
+</div>
+
+        
+</div>
+
+<div style="color: green;text-align:center; border-radius:10px; border: 2px ridge green; padding:5px; margin:auto; width:100px;bottom:50px;" onmouseover="$(this).css('cursor','pointer').css('color','white').css('background-color','green').css('border-color','white');" onmouseout="$(this).css('color','green').css('background-color','white').css('border-color','green');" 
+onclick="$('#modal_helpdesk').css('display','block')">
+    <i class='fa fa-user-secret'><br>Can't Login?<br>Contact Help Desk</i>
+</div>
+
+<div id="modal_helpdesk" class="modal" style="overflow:hidden">
+    <div class="modal-content" style=" padding:10px;width:300px;border-radius:10px;">
+        <span class="close" onclick="$('#modal_helpdesk').css('display','none');" style="position:unset;float:right;">&times;</span>
+        <br><br>
+        <b>Note: Our team is available for Direct Assist from 1AM to 10AM Tuesdays to Saturdays.</b><br><br>
+        CES Number: <br><input type="text" id="helpdesk_ces" style="width:80%;border-radius:10px;margin-right:10%;margin-left:10%;"><br><br>
+        Station Number: <br><input type="text" id="helpdesk_station" style="width:80%;border-radius:10px;margin-right:10%;margin-left:10%;"><br><br>
+        Issue Encountered: <br><textarea type="text" id="helpdesk_issue" style="width:77%;border-radius:10px;resize:vertical;height:100px;margin-top:5px;margin-right:10%;margin-left:10%;"></textarea><br><br>
+        
+        <button onclick="saveHelp($('#helpdesk_ces').val(),$('#helpdesk_station').val(),$('#helpdesk_issue').val());">Submit</button><br><button onclick="$('#helpdesk_ces').val('');$('#helpdesk_station').val('');$('#helpdesk_issue').val('');">Clear</button>
+        <div id="helpdesk_message" style="display:none;color:red">We will attend to your concern at the soonest possible time.</div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        $('#verifyform').submit(function(event) {
+            event.preventDefault();
+            //$(this).submit();
+        }); 
+        $('#signupform').submit(function(event) {
+            event.preventDefault();
+            //$(this).submit();
+        });
+        $('#loginform').submit(function(event) {
+            event.preventDefault();
+            //$(this).submit();
+        }); 
+        window.history.replaceState("/", "Arlo Wings", "/");
+    });
+
+    function saveHelp(ces,station,issue){
+        
+        var data={
+            ces: ces,
+            station:station,
+            issue:issue
+        }
+
+        $.ajax({
+            type:"POST",
+            url:"/api/helpdesk/ticket" ,
+            data:JSON.stringify(data),
+            headers:{
+                "Content-Type":"application/json"
+            },
+            //dataType:"json",
+            success:function(data){
+                //console.log(data);
+                $('#helpdesk_ces').val('');
+                $('#helpdesk_station').val('');
+                $('#helpdesk_issue').val('');
+                
+                $('#helpdesk_message').css('display','block');
+                
+                setTimeout(function(){
+                    $('#modal_helpdesk').css('display','none');
+                    $('#helpdesk_message').css('display','none');
+                },4000);
+
+            },
+            error:function(error){
+
+            }
+        });
+    }
+
+    function verify(){
+        $.get('api/verify/' + $('#CES').val() + '/' + $('#MN').val().toUpperCase() ,function(data){
+            if(data.data.length){
+                $('#verify').removeClass('animateslidedown');
+                $('#verify').addClass('animateslideup');
+                $('#signuppassword').removeClass('animateslideup');
+                $('#signuppassword').addClass('animateslidedown');
+            }else{
+                $('#verifyerror').removeClass('animateslideup');
+                $('#verifyerror').addClass('animateslidedown');
+                setTimeout(function(){
+                    $('#verifyerror').addClass('animateslideup');
+                    $('#verifyerror').removeClass('animateslidedown');
+                },4000);
+            }
+        })
+    }
+
+    function opensignup(){
+        $('#verifyerror').addClass('animateslideup');
+        $('#verifyerror').removeClass('animateslidedown');
+        $('#verify').addClass('animateslidedown');
+        $('#verify').removeClass('animateslideup');
+        $('#signuppassword').addClass('animateslideup');
+        $('#signuppassword').removeClass('animateslidedown');
+        $('#CES').val('');
+        $('#MN').val('');
+        $('#psw').val('');
+        $('#psw-repeat').val('');
+        $('#alias').val('');   
+        $('#signup').css('display','block');
+    }
+
+    function loginuser(CES,password){
+        postData={
+            CES:CES,
+            password:password
+        }
+        try{
+            $.ajax({
+                type:"POST",
+                url:"/login" ,
+                data:JSON.stringify(postData),
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                //dataType:"json",
+                success:function(data){
+                    console.log(data);
+                    localStorage.setItem('expertName',data.expertName);
+                    window.open('/','_self',false);
+                },
+                error:function(error,textStatus,code){
+                    console.log(code);
+                        $('#loginerror').removeClass('animateslideup');
+                        $('#loginerror').addClass('animateslidedown');
+                        setTimeout(function(){
+                            $('#loginerror').addClass('animateslideup');
+                            $('#loginerror').removeClass('animateslidedown');
+                        },4000);
+                }
+            });
+        }catch(err){
+            console.log(err);
+        }
+    }
+
+    function signupuser(){
+        if($('#psw').val()==$('#psw-repeat').val()){
+            var data={
+                ces: $('#CES').val(),
+                alias:$('#alias').val(),
+                password:$('#psw').val()
+            }
+
+            $.ajax({
+                type:"POST",
+                url:"/api/update/user" ,
+                data:JSON.stringify(data),
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                //dataType:"json",
+                success:function(data){
+                    //console.log(data);
+                    $('#signup').css('display','none');
+                    $('#login').css('display','block');
+                },
+                error:function(error){
+                    $('#signuperror-server').removeClass('animateslideup');
+                    $('#signuperror-server').addClass('animateslidedown');
+                    setTimeout(function(){
+                        $('#signuperror-server').addClass('animateslideup');
+                        $('#signuperror-server').removeClass('animateslidedown');
+                    },4000);
+                }
+            });
+        }else{
+            $('#signuperror').removeClass('animateslideup');
+            $('#signuperror').addClass('animateslidedown');
+            setTimeout(function(){
+                $('#signuperror').addClass('animateslideup');
+                $('#signuperror').removeClass('animateslidedown');
+            },4000);
+        }
+    }
+
+    $(".toggle-password").click(function() {
+        $(this).toggleClass("fa-eye fa-eye-slash");
+        var input = $($(this).attr("toggle"));
+        if (input.attr("type") == "password") {
+            input.attr("type", "text");
+        } else {
+            input.attr("type", "password");
+        }
+    });
+
+
+</script>
+
+</body>
+</html>

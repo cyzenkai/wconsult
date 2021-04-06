@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="index.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="index.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="sidebar-container">
+    <div class="sidebar"></div>
+  </div>
+
+  <div class="navbar">
+    <a href="#" id="consult-new"><i class="fa fa-fw fa-envelope"></i> New Consult</a> 
+    <a href="#" id="rma-new"><i class="fa fa-fw fa-envelope"></i> RMA Approval</a> 
+    <a href="#" class="queue-button" onclick="showQueue();"><i class="fa fa-fw fa-search"></i> Queue</a>
+    <a href="#" class="lobby-button" onclick="showLobby();"><i class="fa fa-fw fa-search"></i> Lobby</a>
+  </div>
+
+  <div class="queue-container subcontainer">
+    <div class="queue-window l2-dashboard">
+      <div class="title">L2 Consult</div>
+      <span class="get-consult button-link" onclick="getConsult('l2');">Get Consult</span>
+      <div class="waiting-label">Waiting Experts:</div>
+      <div class="waiting-list"></div>
+      <br>
+      <div class="available-label">Available L2:</div>
+      <div class="available-list"></div>
+    </div>
+    <div class="queue-window cct-dashboard">
+      <div class="title">CCT Consult</div>
+      <span class="get-consult button-link" onclick="getConsult('cct');">Get Consult</span>
+      <div class="waiting-label">Waiting Experts:</div>
+      <div class="waiting-list"></div>
+      <br>
+      <div class="available-label">Available CCT:</div>
+      <div class="available-list"></div>
+    </div>
+    <div class="queue-window rma-dashboard">
+      <div class="title">RMA Consult</div>
+      <span class="get-consult button-link" onclick="getConsult('l2');">Get Consult</span>
+      <div class="waiting-label">Waiting Experts:</div>
+      <div class="waiting-list"></div>
+      <br>
+      <div class="available-label">Available L2/TM:</div>
+      <div class="available-list"></div>
+    </div>
+    <div class="queue-window ongoing-dashboard">
+      <div class="title">Ongoing Consults</div>
+      <br>
+      <div class="ongoing-list"></div>
+    </div>
+  </div>
+  <div class="lobby-container subcontainer">
+    <div class="lobby-window voice-online">
+      <div class="title">Voice Experts</div>
+      <div class="online-label">L1 Online:</div>
+      <div class="online-list" id='l1'></div>
+      <br>
+      <div class="online-label">L2 Online:</div>
+      <div class="online-list" id='l2'></div>
+      <br>
+      <div class="online-label">Order Support Team Online:</div>
+      <div class="online-list" id='os'></div>
+      <br>
+      <div class="online-label">Customer Care Team Online:</div>
+      <div class="online-list" id='cct'></div>
+    </div>
+    <div class="lobby-window nonvoice-online">
+      <div class="title">Non-Voice Experts</div>
+      <div class="online-label">Chat:</div>
+      <div class="online-list" id='chat'></div>
+      <br>
+      <div class="online-label">OTS:</div>
+      <div class="online-list" id='ots'></div>
+    </div>
+    <div class="lobby-window support-online">
+      <div class="title">Support</div>
+      <div class="online-label">TM Online:</div>
+      <div class="online-list" id='tm'></div>
+      <br>
+      <div class="online-label">SME Online:</div>
+      <div class="online-list" id='sme'></div>
+    </div>
+  </div>
+</div>
+<div class="chat-popup">
+  Initiate Chat
+</div>
+<div id="consult-entry" class="modal">
+  <div class="modal-content">
+    <span id="consult-close" class="close">&times;</span>
+    <div class="row">
+      <div class="column">Case Number: <br> <input type="text" size="8" maxlength="8" id="consult-entry-casenumber" class="consult-entry-input" onkeypress="return event.charCode >= 48 && event.charCode <= 57"></div>&nbsp;&nbsp;&nbsp;
+      <div class="column">Device: <br> 
+        <select id="consult-entry-device" style="width:100%">
+          <option value="0" selected="" class="selectheader" disabled="disabled">Select Device</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="column">Reason for Consult: <br> 
+        <select id="consult-entry-reason" style="width:100%">
+          <option value="0" selected="" class="selectheader" disabled="disabled">Select Reason</option>
+          <option value="RMA Recommendation">RMA Recommendation</option>
+          <option value="Technical - Device Functionality/Features">Technical - Device Functionality/Features</option>
+          <option value="Technical - Installation">Technical - Installation</option>
+          <option value="Technical - Login Issues">Technical - Login Issues</option>
+          <option value="Technical - Web/App">Technical - Web/App</option>
+          <option value="Technical - 3rd Party Integration">Technical - 3rd Party Integration</option>
+          <option value="Process - ATR">Process - ATR</option><option value="Process - Safety and Hazard">Process - Safety and Hazard</option>
+          <option value="Process - Litigation and Hold">Process - Litigation and Hold</option>
+          <option value="Process - Video Retrieval">Process - Video Retrieval</option>
+          <option value="Subscription - Functional">Subscription - Functional</option>
+          <option value="Subscription - Transactional">Subscription - Transactional</option>
+          <option value="Subscription - Promo">Subscription - Promo</option></select>
+	</select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="column">Summary: <br> <textarea id="consult-entry-summary" rows="10"></textarea></div>
+    </div>
+
+    <div class="row">
+      <div class="consult-entry-request button-link" onclick="requestConsult();">Request Consult</div>
+      <div class="consult-entry-clear button-link" onclick="clearConsultForm();">Clear Form</div>
+    </div>
+    <div class="row">
+      <div class="column hiddenDiv" id="consult-entry-error">Missing details. Please complete.</div>
+    </div>
+  </div>
+</div>
+
+
+<div id="rma-entry" class="modal">
+  <div class="modal-content">
+    <span id="rma-close" class="close">&times;</span>
+    <div class="row">
+      <div class="column">Case Number: <br> <input type="text" size="8" maxlength="8" id="rma-entry-casenumber" class="rma-entry-input" onkeypress="return event.charCode >= 48 && event.charCode <= 57"></div>&nbsp;&nbsp;&nbsp;
+      <div class="column">Device: <br> 
+        <select id="rma-entry-device" style="width:100%">
+          <option value="0" selected="" class="selectheader" disabled="disabled">Select Device</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="column"><input type="checkbox"> Address updated
+      </div>
+      <div class="column"><input type="radio" name="warranty" value="IW" checked="checked"> In-warranty
+      </div>
+    </div>
+    <div class="row">
+      <div class="column"><input type="checkbox"> Phone Number updated
+      </div>
+      <div class="column"><input type="radio" name="warranty" value="OOW"> Out-of-Warranty
+      </div>
+    </div>
+    <div class="row">
+      <div class="column"><input type="checkbox"> POP update
+      </div>
+    </div>
+    <div class="row">
+      <div class="column">Summary: <br> <textarea id="consult-entry-summary" rows="10"></textarea></div>
+    </div>
+
+    <div class="row">
+      <div class="consult-entry-request button-link" onclick="requestConsult();">Request Consult</div>
+      <div class="consult-entry-clear button-link" onclick="clearConsultForm();">Clear Form</div>
+    </div>
+    <div class="row">
+      <div class="column hiddenDiv" id="consult-entry-error">Missing details. Please complete.</div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="templates">
+  <div class="consult-container-template">
+    <div class="message-options">
+      <div class="message-options-transcript button-link">Get Transcript</div>
+      <div class="message-options-close button-link">Close Consult</div>
+    </div>
+    <div class="log-screen">
+	<input type="text" id="consult_id" hidden>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Case Number:
+		</div>
+		<div class="column">
+			<input type="text" id="consult_casenumber" style="width:100%">
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Escalated to:
+		</div>
+		<div class="column">
+			<input id="L2_list_consult" class="L2_list consult" style="width:100%" readonly>
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Escalated by:
+		</div>
+		<div class="column">
+			<select id="L1_list_consult_source" class="L1_list consult" style="width:100%" onchange="getTM($('#L1_list_consult_source').val(),function(TMname,TMCES){$('#consult_TM').val('');$('#consult_TM').val(TMname);$('#consult_TM').attr('data-tm',TMCES)});">
+			</select>
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Reason of Consult:
+		</div>
+		<div class="column">
+			<select id="consult_invalidreason" style="width:100%">
+<option value="0" selected="" class="selectheader" disabled="disabled">Select Reason</option>
+<option value="RMA Recommendation">RMA Recommendation</option>
+<option value="Technical - Device Functionality/Features">Technical - Device Functionality/Features</option>
+<option value="Technical - Installation">Technical - Installation</option>
+<option value="Technical - Login Issues">Technical - Login Issues</option>
+<option value="Technical - Web/App">Technical - Web/App</option>
+<option value="Technical - 3rd Party Integration">Technical - 3rd Party Integration</option>
+<option value="Process - ATR">Process - ATR</option><option value="Process - Safety and Hazard">Process - Safety and Hazard</option>
+<option value="Process - Litigation and Hold">Process - Litigation and Hold</option>
+<option value="Process - Video Retrieval">Process - Video Retrieval</option>
+<option value="Subscription - Functional">Subscription - Functional</option>
+<option value="Subscription - Transactional">Subscription - Transactional</option>
+<option value="Subscription - Promo">Subscription - Promo</option></select>
+			</select>
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Followed Call Handler:
+		</div>
+		<div class="column" >
+			<label style="font-size:10pt;"><input type="radio" name="consult_callhandler" value="Yes" style="vertical-align: bottom;margin-top:0px"> Yes</label>
+			<label style="font-size:10pt;"><input type="radio" name="consult_callhandler" value="No" style="vertical-align: bottom;margin-top:0px"> No </label>
+			<label style="font-size:10pt;"><input type="radio" name="consult_callhandler" id="consult_callhandler_na" value="NA" style="vertical-align: bottom;margin-top:0px" checked> Not Applicable</label>
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Duration:
+		</div>
+		<div class="column">
+			<input id="consult_duration" class="duration consult" style="width:100%" >
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Reason for Long Consult:
+		</div>
+		<div class="column">
+			<textarea id="consult_durationreason" style="width:100%" rows="5"></textarea>
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Select Device:
+		</div>
+		<div class="column">
+			<select class="consult" id="consult_product" style="width:100%">
+			</select>
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Expert's Opportunity:
+		</div>
+		<div class="column">
+			<select id="consult_opportunity1" style="width:100%">
+				<option value="Technical">Technical</option>
+				<option value="Comms">Comms</option>
+				<option value="Others">Others</option>
+			</select><br>
+			<textarea id="consult_opportunity2" style="width:100%" rows="5"></textarea>
+			
+		</div>
+	</div>
+	<div class="row consult">
+		<div class="column" style="width:auto;min-width:220px;">	
+			Team Manager:
+		</div>
+		<div class="column">
+			<input type="text" id="consult_TM" style="width:100%" readonly>
+		</div>
+	</div>
+	<br>
+	<span class="consult_add">
+		<button id="save_consult_button" onclick="save_consult(
+			$('#L1_list_consult_source'),
+			JSON.parse(getCookie('userdetails')).users_CES,
+			$('#consult_casenumber'),
+			$('#consult_product'),
+			$('#consult_duration'),
+			$('#consult_durationreason'),
+			$('#consult_invalidreason'),
+			$('input[name=consult_callhandler]:checked'),
+			$('#consult_opportunity1'),
+			$('#consult_opportunity2'),
+			$('#consult_feedback'),
+			$('#consult_commitment'),
+			new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));$('#save_consult_button').attr('disabled','true');">
+			Save
+		</button>
+	</span>
+	<span class="consult_edit hiddenDiv">
+		<button onclick="update_consult(
+			$('#consult_id').val(),
+			$('#L1_list_consult_source').val(),
+			JSON.parse(getCookie('userdetails')).users_CES,
+			$('#consult_casenumber').val(),
+			$('#consult_product').val(),
+			$('#consult_duration').val(),
+			$('#consult_durationreason').val(),
+			$('#consult_invalidreason').val(),
+			$('#consult_opportunity1').val(),
+			$('#consult_opportunity2').val(),
+			$('#consult_feedback').val(),
+			$('#consult_commitment').val(),
+			new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));">
+			Update
+		</button>
+	</span>
+	<br><br>
+	<div id="consult_status"></div>
+      </div>
+    <div class="consult-bar">
+      <span class="consult-file-button button-link"><i class="fa fa-fw fa-paperclip"></i></span> <span class="consult-send-button button-link"><i class="fa fa-fw fa-send-o"></i></span> <textarea class="consult-input" rows="5"></textarea>
+    </div>
+  </div>
+  <div class="consult-link-template"></div>
+
+  <div class="chat-container-template">
+    <div class="message-options">
+      <div class="message-options-close button-link">Close Chat</div>
+    </div>
+    <div class="chat-bar">
+      <span class="chat-file-button button-link"><i class="fa fa-fw fa-paperclip"></i></span> <span class="chat-send-button button-link"><i class="fa fa-fw fa-send-o"></i></span> <textarea class="chat-input" rows="5"></textarea>
+    </div>
+  </div>
+  <div class="chat-link-template"></div>
+
+  <div class="team-container-template">
+    <div class="message-options">
+      <span class="message-options-close button-link">Close Chat</span>
+      <span class="message-options-setpin button-link">Set Team Message</span>
+      <span class="message-options-online button-link">Show online<i class="fa fa-fw fa-caret-down team-online-arrow"></i></span>
+      <div class="message-options-team-online"></div>
+      <div class="message-options-pinned"></div>
+    </div>
+    <div class="team-bar">
+      <span class="team-file-button button-link"><i class="fa fa-fw fa-paperclip"></i></span> <span class="team-send-button button-link"><i class="fa fa-fw fa-send-o"></i></span> <textarea class="team-input" rows="5"></textarea>
+    </div>
+  </div>
+  <div class="team-link-template"></div>
+
+  <div class="message-template">
+    <div class="message-name"></div>
+    <div class="message"></div>
+    <div class="message-info"><span class="message-status"></span>&nbsp;&nbsp;&nbsp;<span class="message-time"></span></div>
+  </div>
+
+  <div class="queue-window-template">
+    <div class="title"></div>
+    <div class="available_label"></div>
+    <div class="available_list"></div>
+    <div class="ongoing_label"></div>
+    <div class="ongoing_list"></div>
+  </div>
+  <div class="online-list-item-template">
+    <span class="online-list-item-number"></span>
+    <img class="online-list-item-lob" src="lob-icons.png">
+    <span class="online-list-item-name"></span>
+  </div>
+  <div class="available-list-item-template">
+    <span class="available-list-item-number"></span>
+    <img class="available-list-item-lob" src="lob-icons.png">
+    <span class="available-list-item-name"></span>
+  </div>
+  <div class="waiting-list-item-template">
+    <span class="waiting-list-item-number"></span> 
+    <img class="waiting-list-item-lob" src="lob-icons.png">
+    <span class="waiting-list-item-name"></span>
+  </div>
+  <div class="ongoing-list-item-template">
+    <div class="ongoing-list-item-duration">00:00:00</div>
+    <div class="ongoing-list-item-type"></div> 
+    <div class="ongoing-list-item-room"></div> 
+    <div class="ongoing-list-item-consultant"></div>
+    <div class="ongoing-list-item-expert"></div>
+  </div>
+</div>
+</body>
+</html> 
