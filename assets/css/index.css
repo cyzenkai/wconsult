@@ -149,7 +149,7 @@ body {
 
 .consult-container{
   width:calc(100% - 541px);
-  height:calc(100% - 203px);
+  height:calc(100% - 202px);
   margin-left:500px;
   margin-top:85px;
   background-color: white;
@@ -212,7 +212,7 @@ body {
 
 .chat-container{
   width:calc(100% - 200px);
-  height:calc(100% - 203px);
+  height:calc(100% - 202px);
   margin-left:161px;
   margin-top:85px;
   background-color: white;
@@ -574,7 +574,7 @@ body {
   top:0px;
   left:0px;
   width:300px;
-  height:calc(100% - 203px);
+  height:calc(100% - 202px);
   margin-left:161px;
   margin-top:85px;
   background-color: white;

@@ -62,11 +62,24 @@ $(function() {
   });
 
   socket.on('cancel consult',function(data){
+    var usertype=data.type.toLowerCase();
     console.log("cancel consult from server");
-    console.log('.'+data.type.toLowerCase()+'-dashboard > .waiting-list> #'+data.casenum);
-    $('.'+data.type.toLowerCase()+'-dashboard > .waiting-list > #'+data.casenum).remove();
+    console.log('.'+usertype+'-dashboard > .waiting-list> #'+data.casenum);
+    $('.'+usertype+'-dashboard > .waiting-list > #'+data.casenum).remove();
   });
 
+  socket.on('join room',function(consultData){
+    console.log("joining room");
+    console.log(consultData);
+    socket.emit('join room',consultData.room);
+    newConsult(consultData.room,consultData.type,consultData.casenum,consultData.consultee,consultData.consultant);
+  })
+  
+  socket.on('consult message',function(messageData){
+    console.log("message received");
+    console.log(messageData);
+    displayMessage(messageData.msgClass,messageData.room,messageData.name,messageData.message);
+  })
 
 
   $(window).on( "click", function(event) {
@@ -90,6 +103,7 @@ $(function() {
       $('#consult-entry-reason').append('<option value="RMA">RMA</option>');
       $('#consult-entry-reason').append('<option value="Safety and Hazard">Safety and Hazard</option>');
       $('#consult-entry-reason').append('<option value="Litigation and Hold">Litigation and Hold</option>');
+      $('#consult-entry-reason').append('<option value="File Attachment">File Attachment</option>');
     }else{
       $('#consult-entry-reason').html('');
       $('#consult-entry-reason').append('<option value="0" selected="" class="selectheader" disabled="disabled">Select Reason</option>');
@@ -190,13 +204,20 @@ function getElapsed(starttime){
 
 
 
-function newConsult(room,type,casenum,expert,consultant){
-  addOngoing(type,room,expert,consultant);
+function newConsult(room,type,casenum,consultee,consultant){
+  addOngoing(type,room,consultee,consultant);
   var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
   clickOrder.push(room);
-  $('.consult-link-template').clone().attr('class','consult-link').attr('id',room+'-link').addClass('side-link').append('<b>'+type+' Consult</b><br>Case Number: '+casenum+'<br>Room: '+room+'<br>'+expert).appendTo('.sidebar');
+  $('.consult-link-template').clone().attr('class','consult-link').attr('id',room+'-link').addClass('side-link').append('<b>'+type.toUpperCase()+' Consult</b><br>Case Number: '+casenum+'<br>Room: '+room+'<br>'+(consultee.ces==userCES?consultant.name:consultee.name)).appendTo('.sidebar');
   $('.subcontainer').css('z-index','19');
   $('.consult-container-template').clone().attr('class','consult-container').attr('id',room+'-window').addClass(randomClass).addClass('subcontainer').appendTo('.container');
+  if(consultee.ces==userCES){
+    $('.'+randomClass+'>.log-screen').remove();
+    $('.'+randomClass).css('width','calc(100% - 200px)');
+    $('.'+randomClass).css('margin-left','161px');
+  }
+  
+  
   $('.'+randomClass+'>.consult-bar>.consult-input').attr('id',room).on('keyup',function(e){
     if (e.key === 'Enter' || e.keyCode === 13) {
       $('.'+randomClass+'>.consult-bar>.consult-send-button').click();
@@ -204,7 +225,7 @@ function newConsult(room,type,casenum,expert,consultant){
   });
   $('.'+randomClass+'>.consult-bar>.consult-send-button').click(function(){
     if($('#'+room+'.consult-input').val().trim()!==""){
-      sendMessage(room,'Eric',$('#'+room+'.consult-input').val().trim());
+      sendMessage(room,(consultee.ces==userCES?consultee.name:consultant.name),$('#'+room+'.consult-input').val().trim());
     }
     $('#'+room+'.consult-input').val('').focus();
   });
@@ -339,6 +360,13 @@ function sendMessage(room,name,message){
 var nowDate=new Date;
 var nowTime=(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())+":"+nowDate.getMinutes()+(nowDate.getHours()>12?" PM":" AM");
 var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+var messageData={
+  room:room,
+  name:name,
+  message:message,
+  msgClass:randomClass
+}
+  socket.emit('consult message',messageData);
   $('.message-template').clone().attr('class','message-source').attr('id',room+'-message').addClass(randomClass).appendTo('#'+room+'-window');
   $('.'+randomClass+'>.message').html(message);
   $('.'+randomClass+'>.message-info>.message-status').html('Delivered');
@@ -354,7 +382,7 @@ function setPinMessage(message){
 function displayMessage(msgClass,room,name,message){
 var nowDate=new Date;
 var nowTime=(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())+":"+nowDate.getMinutes()+(nowDate.getHours()>12?" PM":" AM");
-
+  console.log('#'+room+'-window');
   $('.message-template').clone().attr('class','message-destination').attr('id',room+'-message').addClass(msgClass).appendTo('#'+room+'-window');
   $('.'+msgClass+'>.message-name').html(name);
   $('.'+msgClass+'>.message').html(message);
@@ -380,21 +408,21 @@ console.log('.'+type+'-dashboard>.waiting-list');
   $('.waiting-list-item-template').clone().attr('class','waiting-list-item').attr('id',casenum).addClass(randomClass).appendTo('.'+type.toLowerCase()+'-dashboard>.waiting-list');
   $('.'+randomClass+'>.waiting-list-item-lob').addClass('lob-'+lob);
   if(CES==userCES){
-    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+type+'","'+casenum+'")><span class="fa fa-fw fa-times-circle"></span></a>'+name);
+    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+type.toLowerCase()+'","'+casenum+'")><span class="fa fa-fw fa-times-circle">X</span></a>'+name);
   }else{
     $('.'+randomClass+'>.waiting-list-item-name').html(name);
   }
 }
 
-function addOngoing(type,room,consultant,expert){
+function addOngoing(type,room,consultee,consultant){
 var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
 var nowDate=new Date;
 var lobIcon='';
   $('.ongoing-list-item-template').clone().attr('class','ongoing-list-item').attr('id',room).addClass(randomClass).appendTo('.ongoing-dashboard>.ongoing-list');
-  $('.'+randomClass+'>.ongoing-list-item-type').html(type+' Consult');
+  $('.'+randomClass+'>.ongoing-list-item-type').html(type.toUpperCase()+' Consult');
   $('.'+randomClass+'>.ongoing-list-item-room').html('Room: '+room);
-  $('.'+randomClass+'>.ongoing-list-item-consultant').html(consultant);
-  $('.'+randomClass+'>.ongoing-list-item-expert').html(expert);
+  $('.'+randomClass+'>.ongoing-list-item-consultant').html(consultant.name);
+  $('.'+randomClass+'>.ongoing-list-item-expert').html(consultee.name);
   timeinterval[room]= setInterval(function(){updateTimer(randomClass,room,nowDate)},1000);
 }
 
@@ -528,12 +556,13 @@ function getConsult(type){
     type:type,
     ces:userCES
   }
+  console.log('getting consult');
   socket.emit('get consult',data);
 }
 
 function cancelConsult(type,casenum){
   var data={
-    type:type,
+    type:type.toLowerCase(),
     casenum:casenum
   }
   console.log("cancel consult");
