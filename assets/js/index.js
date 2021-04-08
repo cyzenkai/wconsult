@@ -43,7 +43,7 @@ $(function() {
     //addWaiting(type,CES,name,lob)
     console.log("add waiting");
     console.log(data);
-    addWaiting(data.type,data.ces,data.name,data.lob,data.casenum);
+    addWaiting(data);
   });
 
   socket.on('user connect',function(data){
@@ -53,6 +53,26 @@ $(function() {
   socket.on('user list',function(data){
     data.forEach(function(user){
       addOnline(user.type,user.lob,user.ces,user.name,user.type.substr(0,2));
+    })
+  });
+  
+  socket.on('CCTwaiting list',function(data){
+    data.forEach(function(user){
+      addWaiting(user);
+    })
+  });
+  
+  socket.on('reject consult',function(error){
+    console.log(error);
+  });
+  
+  socket.on('ongoing list',function(data){
+    console.log("ongoing list");
+    data.forEach(function(user){
+      console.log(user);
+      if((user.consultee.ces!=userCES)&&(user.consultant.ces!=userCES)){
+          addOngoing(user);  
+      }
     })
   });
 
@@ -72,17 +92,17 @@ $(function() {
     console.log("joining room");
     console.log(consultData);
     socket.emit('join room',consultData.room);
-    newConsult(consultData.room,consultData.type,consultData.casenum,consultData.consultee,consultData.consultant);
+    newConsult(consultData);
   })
   
   socket.on('consult message',function(messageData){
     console.log("message received");
     console.log(messageData);
-    displayMessage(messageData.msgClass,messageData.room,messageData.name,messageData.message);
+    displayMessage(messageData.msgClass,messageData.room,messageData.name,messageData.message,messageData.ces==userCES?"":"self");
   })
 
 
-  $(window).on( "click", function(event) {
+  $(window).on("click", function(event) {
 //    console.log(event.target.classList);
     if(!(event.target.parentElement.classList.contains('online-list-item')||
        event.target.classList.contains('chat-popup')||
@@ -177,19 +197,22 @@ $(function() {
 });
 
 
-function updateTimer(timer,room,startTime){
+function updateTimer(timer,startTime){
   const t = getElapsed(startTime);
 //  console.log(t);
 //  console.log(('0' + t.hours).slice(-2)+('0' + t.minutes).slice(-2)+('0' + t.seconds).slice(-2));
-  $('#'+room+'>.ongoing-list-item-duration').html(('0' + t.hours).slice(-2)+":"+('0' + t.minutes).slice(-2)+":"+('0' + t.seconds).slice(-2));
-  clearInterval(timeinterval[room]);
-  timeinterval[room]= setInterval(function(){updateTimer(timer,room,startTime)},1000);
+  $('.'+timer+' .duration').html(('0' + t.hours).slice(-2)+":"+('0' + t.minutes).slice(-2)+":"+('0' + t.seconds).slice(-2));
+  clearInterval(timeinterval[timer]);
+  timeinterval[timer]= setInterval(function(){updateTimer(timer,startTime)},1000);
 }
 
 function getElapsed(starttime){
   var elapsed;
-  var nowDate=new Date;
-  elapsed=nowDate-starttime;
+  var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+  //console.log(nowDate);
+  //console.log(starttime);
+  var start=new Date(starttime.substr(0,4),parseInt(starttime.substr(5,2))-1,starttime.substr(8,2),starttime.substr(11,2),starttime.substr(14,2),starttime.substr(17,2),0);
+  elapsed=nowDate-start;
   const seconds = Math.floor((elapsed/1000)%60);
   const minutes = Math.floor((elapsed/1000/60)%60);
   const hours = Math.floor((elapsed/(1000*60*60))%24);
@@ -204,53 +227,73 @@ function getElapsed(starttime){
 
 
 
-function newConsult(room,type,casenum,consultee,consultant){
-  addOngoing(type,room,consultee,consultant);
+function newConsult(consultData){
+  addOngoing(consultData);
   var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
-  clickOrder.push(room);
-  $('.consult-link-template').clone().attr('class','consult-link').attr('id',room+'-link').addClass('side-link').append('<b>'+type.toUpperCase()+' Consult</b><br>Case Number: '+casenum+'<br>Room: '+room+'<br>'+(consultee.ces==userCES?consultant.name:consultee.name)).appendTo('.sidebar');
+  clickOrder.push(consultData.room);
+  $('.consult-link-template').clone().attr('class','consult-link').attr('id',consultData.room+'-link').addClass('side-link').append('<b>'+consultData.type.toUpperCase()+' Consult</b><br>Case Number: '+consultData.casenum+'<br>Room: '+consultData.room+'<br>'+(consultData.consultee.ces==userCES?consultData.consultant.name:consultData.consultee.name)).appendTo('.sidebar');
   $('.subcontainer').css('z-index','19');
-  $('.consult-container-template').clone().attr('class','consult-container').attr('id',room+'-window').addClass(randomClass).addClass('subcontainer').appendTo('.container');
-  if(consultee.ces==userCES){
+  $('.consult-container-template').clone().attr('class','consult-container').attr('id',consultData.room+'-window').addClass(randomClass).addClass('subcontainer').appendTo('.container');
+  if(consultData.consultee.ces==userCES){
     $('.'+randomClass+'>.log-screen').remove();
     $('.'+randomClass).css('width','calc(100% - 200px)');
     $('.'+randomClass).css('margin-left','161px');
+    //sendMessage(consultData.room,consultData.consultee.name,'Hi! Requesting assistance with case number '+consultData.casenum+' with device '+consultData.device+', please see summary of case:\n'+consultData.summary);
+  }
+  timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,consultData.consultstarted)},1000);
+  if(consultData.consultant.ces==userCES){
+    $('.'+randomClass+'>.log-screen #consult_casenumber').val(consultData.casenum);
+    $('.'+randomClass+'>.log-screen #L2_list_consult').val(consultData.consultant.name);
+    $('.'+randomClass+'>.log-screen #L1_list_consult_source').val(consultData.consultee.name);
+    $('.'+randomClass+'>.log-screen #consult_invalidreason').val(consultData.reason);
+    $('.'+randomClass+'>.log-screen #consult_product').val(consultData.device);
+    $('.'+randomClass+'>.log-screen #consult_casenumber').attr('id','consult_casenumber-'+randomClass);
+    $('.'+randomClass+'>.log-screen #L2_list_consult').attr('id','L2_list_consult-'+randomClass);
+    $('.'+randomClass+'>.log-screen #L1_list_consult_source').attr('id','L1_list_consult_source-'+randomClass);
+    $('.'+randomClass+'>.log-screen #consult_invalidreason').attr('id','consult_invalidreason-'+randomClass);
+    $('.'+randomClass+'>.log-screen #consult_product').attr('id','consult_product-'+randomClass);
+    $('.'+randomClass+'>.log-screen #consult_duation').attr('id','consult_duration-'+randomClass);
+    $('.'+randomClass+'>.log-screen #consult_durationreason').attr('id','consult_durationreason-'+randomClass);
+    $('.'+randomClass+'>.log-screen #consult_opportunity1').attr('id','consult_opportunity1-'+randomClass);
+    $('.'+randomClass+'>.log-screen #consult_opportunity2').attr('id','consult_opportunity2-'+randomClass);
+    $('.'+randomClass+'>.log-screen [name=consult_callhandler]').prop('name','consult_callhandler-'+randomClass);
+    $('.'+randomClass+'>.log-screen #consult_callhandler_na').attr('id','consult_callhandler_na-'+randomClass).prop('checked',true);
   }
   
-  
-  $('.'+randomClass+'>.consult-bar>.consult-input').attr('id',room).on('keyup',function(e){
+  $('.'+randomClass+'>.consult-bar>.consult-input').attr('id',consultData.room).on('keyup',function(e){
     if (e.key === 'Enter' || e.keyCode === 13) {
       $('.'+randomClass+'>.consult-bar>.consult-send-button').click();
     }
   });
   $('.'+randomClass+'>.consult-bar>.consult-send-button').click(function(){
-    if($('#'+room+'.consult-input').val().trim()!==""){
-      sendMessage(room,(consultee.ces==userCES?consultee.name:consultant.name),$('#'+room+'.consult-input').val().trim());
+    if($('#'+consultData.room+'.consult-input').val().trim()!==""){
+      sendMessage(consultData.room,(consultData.consultee.ces==userCES?consultData.consultee.name:consultData.consultant.name),$('#'+consultData.room+'.consult-input').val().trim());
     }
-    $('#'+room+'.consult-input').val('').focus();
+    $('#'+consultData.room+'.consult-input').val('').focus();
   });
   $('.'+randomClass+'>.message-options>.message-options-transcript').click(function(){
-    getTranscript(room);
+    getTranscript(consultData.room);
   });
   $('.'+randomClass+'>.message-options>.message-options-close').click(function(){
-    closeConsult(room);
+    closeConsult(consultData.room);
   });
   $('.side-link').removeClass('active');
-  $('#'+room+'-link').addClass('active');
-  $('#'+room+'-link').click(function(){
-    clickOrder.splice(clickOrder.indexOf(room),1);
-    clickOrder.push(room);
+  $('#'+consultData.room+'-link').addClass('active');
+  $('#'+consultData.room+'-link').click(function(){
+    clickOrder.splice(clickOrder.indexOf(consultData.room),1);
+    clickOrder.push(consultData.room);
     $('.subcontainer').css('z-index','19');
     $('.side-link').removeClass('active');
-    $('#'+room+'-link').addClass('active');
-    $('#'+room+'-window').css('z-index','20');
-    $('.consult-input#'+room).val('').focus();
+    $('#'+consultData.room+'-link').addClass('active');
+    $('#'+consultData.room+'-window').css('z-index','20');
+    $('.consult-input#'+consultData.room).val('').focus();
     console.log(clickOrder);
   });
-  $('.consult-input#'+room).val('').focus();
+  $('.consult-input#'+consultData.room).val('').focus();
 }
 
 function newChat(room,CES,expert){
+  console.log('newchat');
   var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
   clickOrder.push(room);
   $('.chat-link-template').clone().attr('class','chat-link').attr('id',room+'-link').addClass('side-link').append('<b>Chat</b><br>'+expert).appendTo('.sidebar');
@@ -357,19 +400,20 @@ function getTranscript(room){
 }
 
 function sendMessage(room,name,message){
-var nowDate=new Date;
+var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
 var nowTime=(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())+":"+nowDate.getMinutes()+(nowDate.getHours()>12?" PM":" AM");
 var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
 var messageData={
   room:room,
   name:name,
+  ces:userCES,
   message:message,
   msgClass:randomClass
 }
   socket.emit('consult message',messageData);
   $('.message-template').clone().attr('class','message-source').attr('id',room+'-message').addClass(randomClass).appendTo('#'+room+'-window');
   $('.'+randomClass+'>.message').html(message);
-  $('.'+randomClass+'>.message-info>.message-status').html('Delivered');
+  //$('.'+randomClass+'>.message-info>.message-status').html('Delivered');
   $('.'+randomClass+'>.message-info>.message-time').html(nowTime);
   $('.'+randomClass+'>.message-info').css('min-width',parseInt($('.'+randomClass+'>.message').css('width'))+parseInt($('.'+randomClass+'>.message').css('padding-left'))+parseInt($('.'+randomClass+'>.message').css('padding-right')));
   $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));
@@ -379,51 +423,68 @@ function setPinMessage(message){
   $('.team-container .message-options-pinned').html(message);
 }
 
-function displayMessage(msgClass,room,name,message){
-var nowDate=new Date;
+function displayMessage(msgClass,room,name,message,flag){
+  
+var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
 var nowTime=(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())+":"+nowDate.getMinutes()+(nowDate.getHours()>12?" PM":" AM");
   console.log('#'+room+'-window');
-  $('.message-template').clone().attr('class','message-destination').attr('id',room+'-message').addClass(msgClass).appendTo('#'+room+'-window');
-  $('.'+msgClass+'>.message-name').html(name);
-  $('.'+msgClass+'>.message').html(message);
-  $('.'+msgClass+'>.message-info>.message-status').html('Delivered');
-  $('.'+msgClass+'>.message-info>.message-time').html(nowTime);
-  $('.'+msgClass+'>.message-info').css('width',parseInt($('.'+msgClass+'>.message').css('width'))+parseInt($('.'+msgClass+'>.message').css('padding-left'))+parseInt($('.'+msgClass+'>.message').css('padding-right')));
-  $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));
+  if(flag=="self"){
+      $('.message-template').clone().attr('class','message-destination').attr('id',room+'-message').addClass(msgClass).appendTo('#'+room+'-window');
+      $('.'+msgClass+'>.message-name').html(name);
+      $('.'+msgClass+'>.message').html(message);
+      //$('.'+msgClass+'>.message-info>.message-status').html('Delivered');
+      $('.'+msgClass+'>.message-info>.message-time').html(nowTime);
+      $('.'+msgClass+'>.message-info').css('width',parseInt($('.'+msgClass+'>.message').css('width'))+parseInt($('.'+msgClass+'>.message').css('padding-left'))+parseInt($('.'+msgClass+'>.message').css('padding-right')));
+      $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));
+  }else{
+      $('.message-template').clone().attr('class','message-source').attr('id',room+'-message').addClass(msgClass).appendTo('#'+room+'-window');  
+      $('.'+msgClass+'>.message').html(message);
+      //$('.'+msgClass+'>.message-info>.message-status').html('Delivered');
+      $('.'+msgClass+'>.message-info>.message-time').html(nowTime);
+      $('.'+msgClass+'>.message-info').css('min-width',parseInt($('.'+msgClass+'>.message').css('width'))+parseInt($('.'+msgClass+'>.message').css('padding-left'))+parseInt($('.'+msgClass+'>.message').css('padding-right')));
+      $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));
+  }
+  
+  
 }
 
 function addAvailable(type,CES,name,lob,number){
 var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
-
   $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',CES).addClass(randomClass).appendTo('.'+type.toLowerCase()+'-dashboard>.available-list');
   $('.'+randomClass+'>.available-list-item-lob').addClass('lob-'+lob);
   $('.'+randomClass+'>.available-list-item-number').html(number+'. ');
   $('.'+randomClass+'>.available-list-item-name').html(name);
 }
 
-function addWaiting(type,CES,name,lob,casenum){
+function addWaiting(data){
+  
 var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
 var lobIcon='';
-console.log('.'+type+'-dashboard>.waiting-list');
-  $('.waiting-list-item-template').clone().attr('class','waiting-list-item').attr('id',casenum).addClass(randomClass).appendTo('.'+type.toLowerCase()+'-dashboard>.waiting-list');
-  $('.'+randomClass+'>.waiting-list-item-lob').addClass('lob-'+lob);
-  if(CES==userCES){
-    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+type.toLowerCase()+'","'+casenum+'")><span class="fa fa-fw fa-times-circle">X</span></a>'+name);
+console.log(data);
+  $('.waiting-list-item-template').clone().attr('class','waiting-list-item').attr('id',data.casenum).addClass(randomClass).appendTo('.'+data.type.toLowerCase()+'-dashboard>.waiting-list');
+  $('.'+randomClass+'>.waiting-list-item-lob').addClass('lob-'+data.lob.substr(0,2));
+  if(data.ces==userCES){
+    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+data.type.toLowerCase()+'","'+data.casenum+'")><span class="fa fa-fw fa-times-circle">X</span></a>'+data.name);
   }else{
-    $('.'+randomClass+'>.waiting-list-item-name').html(name);
+    $('.'+randomClass+'>.waiting-list-item-name').html(data.name);
   }
+  console.log(data.requestTime);
+  timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,data.requestTime)},1000);
+  console.log(timeinterval);
 }
 
-function addOngoing(type,room,consultee,consultant){
+function addOngoing(data){
 var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
 var nowDate=new Date;
 var lobIcon='';
-  $('.ongoing-list-item-template').clone().attr('class','ongoing-list-item').attr('id',room).addClass(randomClass).appendTo('.ongoing-dashboard>.ongoing-list');
-  $('.'+randomClass+'>.ongoing-list-item-type').html(type.toUpperCase()+' Consult');
-  $('.'+randomClass+'>.ongoing-list-item-room').html('Room: '+room);
-  $('.'+randomClass+'>.ongoing-list-item-consultant').html(consultant.name);
-  $('.'+randomClass+'>.ongoing-list-item-expert').html(consultee.name);
-  timeinterval[room]= setInterval(function(){updateTimer(randomClass,room,nowDate)},1000);
+  console.log(data);
+  $('.ongoing-list-item-template').clone().attr('class','ongoing-list-item').attr('id',data.room).addClass(randomClass).appendTo('.ongoing-dashboard>.ongoing-list');
+  $('.'+randomClass+'>.ongoing-list-item-type').html(data.type.toUpperCase()+' Consult');
+  $('.'+randomClass+'>.ongoing-list-item-room').html('Room: '+data.room);
+  $('.'+randomClass+'>.ongoing-list-item-consultant').html(data.consultant.name);
+  $('.'+randomClass+'>.ongoing-list-item-expert').html(data.consultee.name);
+  console.log(data.consultstarted);
+  timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,data.consultstarted)},1000);
 }
 
 function addOnline(type,subtype,CES,name,lob){
@@ -447,11 +508,11 @@ function addOnline(type,subtype,CES,name,lob){
   $('.online-list-item-template').clone().attr('class','online-list-item').attr('id',CES).addClass(randomClass).appendTo('.'+gentype+'-online>#'+subtype+type+'.online-list');
   $('.'+randomClass+'>.online-list-item-lob').addClass('lob-'+lob);
   $('.'+randomClass+'>.online-list-item-name').html(name);
-  if(CES!=userCES){
-    $('.'+randomClass).click(function(event){
+  /*if(CES!=userCES){
+    $('.'+randomClass).on('click',function(event){
       popupChat(event,CES,name);
     });
-  }
+  }*/
 }
 
 function sortList(className){
@@ -506,11 +567,13 @@ function popupChat(event,CES,name){
   console.log("popping");
   console.log(event.pageX);
   console.log(event.pageY);
+  console.log($(".chat-popup"));
+  $(".chat-popup").unbind('click');
   $('.chat-popup').css('left',event.pageX);      // <<< use pageX and pageY
   $('.chat-popup').css('top',event.pageY);
   $('.chat-popup').css('display','inline');     
   $(".chat-popup").css("position", "absolute");
-  $(".chat-popup").click(function(){
+  $(".chat-popup").on('click',function(){
     newChat(randomClass,CES,name);
     $('.chat-popup').css('display','none');
   });

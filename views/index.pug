@@ -83,10 +83,10 @@ html
                 .lobby-window.support-online
                     .title Support
                     .online-label TM Online:
-                    #TM.online-list
+                    #L1TM.online-list
                     br
                     .online-label SME Online:
-                    #SME.online-list
+                    #L1SME.online-list
         .chat-popup
             | Initiate Chat
         #consult-entry.modal
@@ -184,28 +184,35 @@ html
                 .message-options
                     .message-options-transcript.button-link Get Transcript
                     .message-options-close.button-link Close Consult
+                    |&nbsp;
+                    span.duration 00:00:00
                 .log-screen
                     input#consult_id(type='text' hidden='')
                     .row.consult
                         .column(style='width:auto;min-width:220px;')
                             | Case Number:
                         .column
-                            input#consult_casenumber(type='text' style='width:100%')
-                    .row.consult
+                            input#consult_casenumber(type='text' style='width:100%' readonly='')
+                    .row.consult.hiddenDiv
                         .column(style='width:auto;min-width:220px;')
                             | Escalated to:
                         .column
                             input#L2_list_consult.L2_list.consult(style='width:100%' readonly='')
-                    .row.consult
+                    .row.consult.hiddenDiv
                         .column(style='width:auto;min-width:220px;')
                             | Escalated by:
                         .column
-                            select#L1_list_consult_source.L1_list.consult(style='width:100%' onchange="getTM($('#L1_list_consult_source').val(),function(TMname,TMCES){$('#consult_TM').val('');$('#consult_TM').val(TMname);$('#consult_TM').attr('data-tm',TMCES)});")
+                            input#L1_list_consult_source.L1_list.consult(style='width:100%' readonly='')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Select Device:
+                        .column
+                            input#consult_product.consult(style='width:100%' readonly='')
                     .row.consult
                         .column(style='width:auto;min-width:220px;')
                             | Reason of Consult:
                         .column
-                            select#consult_invalidreason(style='width:100%')
+                            input#consult_invalidreason(style='width:100%' readonly='')
                     .row.consult
                         .column(style='width:auto;min-width:220px;')
                             | Followed Call Handler:
@@ -223,17 +230,12 @@ html
                         .column(style='width:auto;min-width:220px;')
                             | Duration:
                         .column
-                            input#consult_duration.duration.consult(style='width:100%')
+                            input#consult_duration.duration.consult(style='width:100%' readonly='')
                     .row.consult
                         .column(style='width:auto;min-width:220px;')
                             | Reason for Long Consult:
                         .column
                             textarea#consult_durationreason(style='width:100%' rows='5')
-                    .row.consult
-                        .column(style='width:auto;min-width:220px;')
-                            | Select Device:
-                        .column
-                            select#consult_product.consult(style='width:100%')
                     .row.consult
                         .column(style='width:auto;min-width:220px;')
                             | Expert&apos;s Opportunity:
@@ -244,13 +246,13 @@ html
                                 option(value='Others') Others
                             br
                             textarea#consult_opportunity2(style='width:100%' rows='5')
-                    .row.consult
+                    .row.consult.hiddenDiv
                         .column(style='width:auto;min-width:220px;')
                             | Team Manager:
                         .column
                             input#consult_TM(type='text' style='width:100%' readonly='')
                     br
-                    span.consult_add
+                    span.consult_add.hiddenDiv
                         button#save_consult_button(onclick="save_consult(\
                         $('#L1_list_consult_source'),\
                         JSON.parse(getCookie('userdetails')).users_CES,\
@@ -265,7 +267,7 @@ html
                         $('#consult_feedback'),\
                         $('#consult_commitment'),\
                         new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));$('#save_consult_button').attr('disabled','true');")
-                        | Save
+                          | Save
                     span.consult_edit.hiddenDiv
                         button(onclick="update_consult(\
                         $('#consult_id').val(),\
@@ -281,7 +283,7 @@ html
                         $('#consult_feedback').val(),\
                         $('#consult_commitment').val(),\
                         new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));")
-                        | Update
+                          | Update
                     br
                     br
                     #consult_status
@@ -337,10 +339,11 @@ html
                 img.available-list-item-lob(src='lob-icons.png')
                 span.available-list-item-name
             .waiting-list-item-template
+                span.duration 00:00:00
                 img.waiting-list-item-lob(src='lob-icons.png')
                 span.waiting-list-item-name
             .ongoing-list-item-template
-                .ongoing-list-item-duration 00:00:00
+                .ongoing-list-item-duration.duration 00:00:00
                 .ongoing-list-item-type
                 .ongoing-list-item-room
                 .ongoing-list-item-consultant

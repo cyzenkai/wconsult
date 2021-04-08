@@ -588,10 +588,12 @@ body {
 }
 
 .ongoing-list-item-duration{
-  float:right;
-  border:1px solid black;
-  font-family: "Courier New";
-  font-weight:bold;
+  float:right!important;
+  border:1px solid black!important;
+  font-family: "Courier New"!important;
+  font-size:12px;
+  font-weight:bold!important;
+  
 }
 
 .chat-popup{
