@@ -52,11 +52,6 @@ body {
   border-right: 1px solid black;
 }
 
-.active {
-  background-color: #b5e8ba!important;
-  color:black!important;
-}
-
 @media screen and (max-width: 500px) {
 }
 
@@ -747,3 +742,26 @@ input:checked + .slider:before {
 .fa-times-circle {
   color:red;
 }
+
+.active {
+  background-color: #b5e8ba;
+}
+
+.endedConsult{
+    color: #fff;
+		padding: 10px;
+		display: inline-block;
+		animation: blinkingBackground 5s infinite;
+}
+
+@keyframes blinkingBackground{
+		0%		{ background-color: #f58f87;color:white}
+    1%    { background-color: #ffcbc7;color:black}
+		33%		{ background-color: #ffcbc7;color:white}
+    34%    { background-color: #f58f87;color:black}
+    66%		{ background-color: #f58f87;color:white}
+    67%    { background-color: #ffcbc7;color:black}
+		99%		{ background-color: #ffcbc7;color:white}
+    100%    { background-color: #f58f87;color:black}
+
+	}

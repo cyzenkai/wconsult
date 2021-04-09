@@ -3,7 +3,8 @@ html
     head
         meta(name='viewport' content='width=device-width, initial-scale=1')
         link(rel='stylesheet', href='/assets/css/index.css')
-        link(rel='stylesheet', href='//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css')
+        link(rel='stylesheet', href='/node_modules/font-awesome/4.7.0/css/font-awesome.css')
+        link(rel='stylesheet', href='/node_modules/font-awesome/4.7.0/css/solid.css')
         script(src='/assets/js/jquery-3.4.1.min.js')
         script(src='/assets/js/socket/socket.io.js')
         script(src='/assets/js/createjs-2013.09.25.min.js')
@@ -224,18 +225,13 @@ html
                             input(type='radio' name='consult_callhandler' value='No' style='vertical-align: bottom;margin-top:0px')
                             |  No
                             label(style='font-size:10pt;')
-                            input#consult_callhandler_na(type='radio' name='consult_callhandler' value='NA' style='vertical-align: bottom;margin-top:0px' checked='')
+                            input#consult_callhandler_na(type='radio' name='consult_callhandler' value='Not Applicable' style='vertical-align: bottom;margin-top:0px' checked='')
                             |  Not Applicable
-                    .row.consult
+                    .row.consult.hiddenDiv
                         .column(style='width:auto;min-width:220px;')
                             | Duration:
                         .column
-                            input#consult_duration.duration.consult(style='width:100%' readonly='')
-                    .row.consult
-                        .column(style='width:auto;min-width:220px;')
-                            | Reason for Long Consult:
-                        .column
-                            textarea#consult_durationreason(style='width:100%' rows='5')
+                            input#consult_duration.consult(style='width:100%' readonly='')
                     .row.consult
                         .column(style='width:auto;min-width:220px;')
                             | Expert&apos;s Opportunity:
@@ -246,6 +242,13 @@ html
                                 option(value='Others') Others
                             br
                             textarea#consult_opportunity2(style='width:100%' rows='5')
+                    .row.consult.hiddenDiv.longConsult
+                        .column(style='width:auto;min-width:220px;color:red;font-weight:bold')
+                            | LONG CONSULT WARNING
+                        .column(style='width:auto;min-width:220px;')
+                            | Reason for Long Consult:
+                        .column
+                            textarea#consult_durationreason(style='width:100%' rows='5')
                     .row.consult.hiddenDiv
                         .column(style='width:auto;min-width:220px;')
                             | Team Manager:
@@ -264,8 +267,6 @@ html
                         $('input[name=consult_callhandler]:checked'),\
                         $('#consult_opportunity1'),\
                         $('#consult_opportunity2'),\
-                        $('#consult_feedback'),\
-                        $('#consult_commitment'),\
                         new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));$('#save_consult_button').attr('disabled','true');")
                           | Save
                     span.consult_edit.hiddenDiv

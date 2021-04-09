@@ -197,32 +197,28 @@ app.post("/api/consults/add", (req, res, next) => {
         res.status(400).json({"error":errors.join(",")});
         return;
     }
-    //console.log(req.body);
+    console.log(req.body);
     var data = {
         consults_L1:req.body.L1_list_consult_source,
-		consults_L2:req.body.L2_list_consult,
-		consult_casenumber:req.body.consult_casenumber,
-		consult_product:req.body.consult_product,
+        consults_L2:req.body.L2_list_consult,
+        consult_casenumber:req.body.consult_casenumber,
+        consult_product:req.body.consult_product,
         consult_duration:req.body.consult_duration,
         consult_durationreason:req.body.consult_durationreason,
         consult_callhandler:req.body.consult_callhandler,
-		consult_invalidreason:req.body.consult_invalidreason,
-		consult_opportunity:req.body.consult_opportunity,
-		consult_feedback:req.body.consult_feedback,
-		consult_commitment:req.body.consult_commitment,
+        consult_invalidreason:req.body.consult_invalidreason,
+        consult_opportunity:req.body.consult_opportunity,
         consult_timestamp:req.body.consult_timestamp,
-        consult_approved:0,
-        consult_fornotify:'1000'
+        consult_summary:req.body.consult_summary,
+        consult_room:req.body.consult_room
     }
-    if(req.body.consult_opportunity.split('=-=')[0]=='None'){
-        data.consult_fornotify='0000';
-        data.consult_approved=3;
-    }
+      
+
     
-    //console.log(data);
-    var sql ='INSERT INTO consults (consults_L1,consults_L2,consults_casenumber,consults_product,consults_duration,consults_durationreason,consults_followedcallhandler,consults_reason,consults_opportunity,consults_feedback,consults_commitment,consults_timestamp,consults_approved,consults_remarks,consults_fornotify) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-    var params =[data.consults_L1,data.consults_L2,data.consult_casenumber,data.consult_product,data.consult_duration,data.consult_durationreason,data.consult_callhandler,data.consult_invalidreason,data.consult_opportunity,data.consult_feedback,data.consult_commitment,data.consult_timestamp,data.consult_approved,"",data.consult_fornotify];
-	//console.log(sql);
+    console.log(data);
+    var sql ='INSERT INTO consult_log (consults_L1,consults_L2,consults_casenumber,consults_product,consults_duration,consults_durationreason,consults_followedcallhandler,consults_reason,consults_opportunity,consults_timestamp,consults_summary,consults_room) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'
+    var params =[data.consults_L1,data.consults_L2,data.consult_casenumber,data.consult_product,data.consult_duration,data.consult_durationreason,data.consult_callhandler,data.consult_invalidreason,data.consult_opportunity,data.consult_timestamp,data.consult_summary,data.consult_room];
+	  console.log(sql);
     db.query(sql, params, function (err, result) {
         if (err){
             //res.status(400).json({"error": err.message})
@@ -235,25 +231,7 @@ app.post("/api/consults/add", (req, res, next) => {
             "id" : this.lastID
             
         })
-        //console.log(users);
-        //console.log(res.statusMessage);
-        var L2TM = users.filter(function(element,index,array){
-            try{
-                return element.user["users_type"] == "Level 2 TM";
-            }catch(error){
 
-            }
-        });
-        console.log("L2TM:");
-        //console.log(L2TM);
-
-        L2TM.forEach(function(element){
-            //console.log("in foreach");
-            //console.log(element);
-            io.to(`${element.userID}`).emit('new consult');
-        });
-        //console.log(L2TM);
-        //console.log(users.find(o => o.user["users_type"] == "Level 2 TM"));
     });
     
 })
@@ -1108,6 +1086,15 @@ io.on('connection', function(socket){
             ongoingConsult[ongoingConsult.findIndex(item => item.room === message.room)].messages.push(message);
             socket.to(message.room).emit('consult message',message);
         }
+    })
+  
+    socket.on('end consult',function(consultData){
+        if(ongoingConsult.findIndex(item => item.room === consultData.room)>=0){
+            socket.to(consultData.room).emit('end consult',consultData);
+            ongoingConsult.splice(ongoingConsult.findIndex(item => item.room === consultData.room),1);
+            io.emit('delete ongoing',consultData.room);  
+        }
+        
     })
 });
 

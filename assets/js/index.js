@@ -85,7 +85,15 @@ $(function() {
     var usertype=data.type.toLowerCase();
     console.log("cancel consult from server");
     console.log('.'+usertype+'-dashboard > .waiting-list> #'+data.casenum);
+    clearInterval(timeinterval[$('.'+usertype+'-dashboard > .waiting-list > #'+data.casenum+' > .duration').attr('id')]);
     $('.'+usertype+'-dashboard > .waiting-list > #'+data.casenum).remove();
+  });
+  
+  socket.on('delete ongoing',function(room){
+    var randomClass=$('.ongoing-list-item#'+room).attr("class").split(/\s+/)[1];
+    clearInterval(timeinterval[randomClass]);
+    console.log(timeinterval[randomClass]);
+    $('.ongoing-list-item#'+room).remove();
   });
 
   socket.on('join room',function(consultData){
@@ -99,6 +107,11 @@ $(function() {
     console.log("message received");
     console.log(messageData);
     displayMessage(messageData.msgClass,messageData.room,messageData.name,messageData.message,messageData.ces==userCES?"":"self");
+  })
+  
+  socket.on('end consult',function(consultData){
+    console.log("end consult received");
+    endConsult(consultData);
   })
 
 
@@ -202,6 +215,11 @@ function updateTimer(timer,startTime){
 //  console.log(t);
 //  console.log(('0' + t.hours).slice(-2)+('0' + t.minutes).slice(-2)+('0' + t.seconds).slice(-2));
   $('.'+timer+' .duration').html(('0' + t.hours).slice(-2)+":"+('0' + t.minutes).slice(-2)+":"+('0' + t.seconds).slice(-2));
+  if(($('.'+timer+' .duration').attr('id')==undefined)&&($('.'+timer+' .longConsult').hasClass('hiddenDiv'))){
+      if((parseInt(('0' + t.minutes).slice(-2))>=0)&&(parseInt(('0' + t.seconds).slice(-2))>=20)){
+          $('.'+timer+' .longConsult').removeClass('hiddenDiv');
+      }
+  }
   clearInterval(timeinterval[timer]);
   timeinterval[timer]= setInterval(function(){updateTimer(timer,startTime)},1000);
 }
@@ -272,10 +290,10 @@ function newConsult(consultData){
     $('#'+consultData.room+'.consult-input').val('').focus();
   });
   $('.'+randomClass+'>.message-options>.message-options-transcript').click(function(){
-    getTranscript(consultData.room);
+    showTranscript(getTranscript(consultData.room));
   });
   $('.'+randomClass+'>.message-options>.message-options-close').click(function(){
-    closeConsult(consultData.room);
+    closeConsult(consultData);
   });
   $('.side-link').removeClass('active');
   $('#'+consultData.room+'-link').addClass('active');
@@ -372,36 +390,78 @@ function newTeam(room,team){
   $('.team-input#'+room).val('').focus();
 }
 
-function closeConsult(room){
-  getTranscript(room);
-  $('#'+room+'-link').remove();
-  $('#'+room+'-window').remove();
+function closeConsult(consultData){
+  var randomClass=$('#'+consultData.room+'-window').attr("class").split(/\s+/)[1];
+  consultData.duration=$('#'+consultData.room+'-window .duration').text();
+  clearInterval(timeinterval[randomClass]);
+  showTranscript(getTranscript(consultData));
+  if($('#'+consultData.room+'-window .log-screen').length){
+    consultData.durationreason=$('#'+consultData.room+'-window #consult_durationreason-'+randomClass).val();
+    consultData.callhandler=$('#'+consultData.room+'-window input[name=consult_callhandler-'+randomClass+']:checked').val();
+    consultData.opportunity1=$('#'+consultData.room+'-window #consult_opportunity1-'+randomClass).val();
+    consultData.opportunity2=$('#'+consultData.room+'-window #consult_opportunity2-'+randomClass).val();
+    consultData.timestamp=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+    console.log("has log screen");
+    saveConsult(consultData.consultee.ces,consultData.consultant.ces,consultData.casenum,consultData.device,
+               consultData.duration,consultData.durationreason,consultData.reason,consultData.callhandler,
+               consultData.opportunity1,consultData.opportunity2,consultData.timestamp,consultData.summary,consultData.room);
+  }
+  socket.emit('end consult',consultData);
+  $('#'+consultData.room+'-link').remove();
+  $('#'+consultData.room+'-window').remove();
   $('.subcontainer').css('z-index','19');
   console.log(clickOrder[clickOrder.length-1]);
-  clickOrder.splice(clickOrder.indexOf(room),1);
+  clickOrder.splice(clickOrder.indexOf(consultData.room),1);
   $('#'+clickOrder[clickOrder.length-1]+'-link').addClass('active');
   $('#'+clickOrder[clickOrder.length-1]+'-window').css('z-index','20');
 }
 
-function closeChat(room){
-  getTranscript(room);
-  $('#'+room+'-link').remove();
-  $('#'+room+'-window').remove();
+function endConsult(consultData){
+  console.log("blah blah has left the chat");
+  console.log($('#'+consultData.room+'-window').attr("class").split(/\s+/)[1]);
+  var randomClass=$('#'+consultData.room+'-window').attr("class").split(/\s+/)[1];
+  $('#'+consultData.room+'-link').addClass('endedConsult');
+  clearInterval(timeinterval[randomClass]);
+}
+
+function closeChat(consultData){
+  //not
+  getTranscript(consultData);
+  $('#'+consultData.room+'-link').remove();
+  $('#'+consultData.room+'-window').remove();
   $('.subcontainer').css('z-index','19');
   console.log(clickOrder[clickOrder.length-1]);
-  clickOrder.splice(clickOrder.indexOf(room),1);
+  clickOrder.splice(clickOrder.indexOf(consultData.room),1);
   $('#'+clickOrder[clickOrder.length-1]+'-link').addClass('active');
   $('#'+clickOrder[clickOrder.length-1]+'-window').css('z-index','20');
 
 }
 
-function getTranscript(room){
-  console.log("getting transcript for "+room);
+function getTranscript(consultData){
+  var content="Case Number: "+consultData.casenum+"<br>";
+  content+="Summary: "+consultData.summary+"<br>";
+  content+="Consultant: "+consultData.consultant.name+"<br>";
+  content+="Consultee: "+consultData.consultee.name+"<br>";
+  content+="Request Time: "+consultData.requestTime+"<br>";
+  content+="Start Time: "+consultData.consultstarted+"<br>";
+  content+="Duration: "+consultData.duration+"<br><br>";
+  content+="Transcript <br><br>";
+  $('.'+consultData.room+'-message').each(function(message){
+    content+=$( this ).children('.message-info').children('.message-time').text()+"<br>";
+    content+=$( this ).children('.message-name').text()+": "+$( this ).children('.message').text()+"<br>";
+    //console.log(message.children('.message-name'));
+    //console.log(message.children('.message-info').children('.message-time'));
+    //console.log(message.children('.message'));
+  })
+  return content;
+  
 }
 
 function sendMessage(room,name,message){
 var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
-var nowTime=(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())+":"+nowDate.getMinutes()+(nowDate.getHours()>12?" PM":" AM");
+  
+  
+var nowTime=(((nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())<10)?('0'+(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())):(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours()))+":"+((nowDate.getMinutes()<10)?('0'+nowDate.getMinutes()):(nowDate.getMinutes()))+":"+((nowDate.getSeconds()<10)?('0'+nowDate.getSeconds()):(nowDate.getSeconds()))+(nowDate.getHours()>12?" PM":" AM");
 var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
 var messageData={
   room:room,
@@ -411,7 +471,8 @@ var messageData={
   msgClass:randomClass
 }
   socket.emit('consult message',messageData);
-  $('.message-template').clone().attr('class','message-source').attr('id',room+'-message').addClass(randomClass).appendTo('#'+room+'-window');
+  $('.message-template').clone().attr('class','message-source').addClass(randomClass).addClass(room+'-message').appendTo('#'+room+'-window');
+  $('.'+randomClass+'>.message-name').html(name).addClass('hiddenDiv');
   $('.'+randomClass+'>.message').html(message);
   //$('.'+randomClass+'>.message-info>.message-status').html('Delivered');
   $('.'+randomClass+'>.message-info>.message-time').html(nowTime);
@@ -425,11 +486,11 @@ function setPinMessage(message){
 
 function displayMessage(msgClass,room,name,message,flag){
   
-var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
-var nowTime=(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())+":"+nowDate.getMinutes()+(nowDate.getHours()>12?" PM":" AM");
+  var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+  var nowTime=(((nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())<10)?('0'+(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())):(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours()))+":"+((nowDate.getMinutes()<10)?('0'+nowDate.getMinutes()):(nowDate.getMinutes()))+":"+((nowDate.getSeconds()<10)?('0'+nowDate.getSeconds()):(nowDate.getSeconds()))+(nowDate.getHours()>12?" PM":" AM");
   console.log('#'+room+'-window');
   if(flag=="self"){
-      $('.message-template').clone().attr('class','message-destination').attr('id',room+'-message').addClass(msgClass).appendTo('#'+room+'-window');
+      $('.message-template').clone().attr('class','message-destination').addClass(msgClass).addClass(room+'-message').appendTo('#'+room+'-window');
       $('.'+msgClass+'>.message-name').html(name);
       $('.'+msgClass+'>.message').html(message);
       //$('.'+msgClass+'>.message-info>.message-status').html('Delivered');
@@ -437,7 +498,8 @@ var nowTime=(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())+":"
       $('.'+msgClass+'>.message-info').css('width',parseInt($('.'+msgClass+'>.message').css('width'))+parseInt($('.'+msgClass+'>.message').css('padding-left'))+parseInt($('.'+msgClass+'>.message').css('padding-right')));
       $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));
   }else{
-      $('.message-template').clone().attr('class','message-source').attr('id',room+'-message').addClass(msgClass).appendTo('#'+room+'-window');  
+      $('.message-template').clone().attr('class','message-source').addClass(msgClass).addClass(room+'-message').appendTo('#'+room+'-window');
+      $('.'+msgClass+'>.message-name').html(name).addClass('hiddenDiv');
       $('.'+msgClass+'>.message').html(message);
       //$('.'+msgClass+'>.message-info>.message-status').html('Delivered');
       $('.'+msgClass+'>.message-info>.message-time').html(nowTime);
@@ -468,6 +530,7 @@ console.log(data);
   }else{
     $('.'+randomClass+'>.waiting-list-item-name').html(data.name);
   }
+  $('.'+randomClass+'>.duration').attr('id',randomClass);
   console.log(data.requestTime);
   timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,data.requestTime)},1000);
   console.log(timeinterval);
@@ -483,6 +546,7 @@ var lobIcon='';
   $('.'+randomClass+'>.ongoing-list-item-room').html('Room: '+data.room);
   $('.'+randomClass+'>.ongoing-list-item-consultant').html(data.consultant.name);
   $('.'+randomClass+'>.ongoing-list-item-expert').html(data.consultee.name);
+  $('.'+randomClass+'>.duration').attr('id',randomClass);
   console.log(data.consultstarted);
   timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,data.consultstarted)},1000);
 }
@@ -597,7 +661,7 @@ function requestConsult(){
     $('#consult-entry-error').removeClass('hiddenDiv');
     var m=setInterval(function(){$('#consult-entry-error').addClass('hiddenDiv');},5000);
   }else{
-    data={
+    var data={
       ces:userCES,
       name:userCN,
       type:$('#consult-entry-type').prop('checked')?'CCT':'L2',
@@ -664,4 +728,56 @@ function getDataRecord(api,callback,data){
 	xhr.onerror = function() {
 	  console.log("Request failed");
 	};
+}
+
+function saveConsult(L1,L2,casenumber,product,duration,durationreason,reason,callhandler,opportunity1,opportunity2,datetime,summary,room){
+  var error=false;
+
+  var data={
+    L1_list_consult_source:L1,
+    L2_list_consult:L2,
+    consult_casenumber:casenumber,
+    consult_product:product,
+    consult_duration:duration,
+    consult_durationreason:durationreason,
+    consult_callhandler:callhandler,
+    consult_invalidreason:reason,
+    consult_opportunity:opportunity1 +"=-="+ opportunity2,
+    consult_timestamp:datetime,
+    consult_summary:summary,
+    consult_room:room,
+  }
+  console.log(data);
+
+  $.ajax({
+    type:"POST",
+    url:"/api/consults/add" ,
+    data:JSON.stringify(data),
+    headers:{
+      "Content-Type":"application/json"
+    },
+    //dataType:"json",
+    success:function(data){
+      //console.log(data);
+    },
+    error:function(error){
+      console.log(error);
+    }
+  });
+}
+
+function showTranscript(transcript){
+	console.log(transcript);
+	var htmlContent='<pre>';
+	htmlContent+=transcript;
+	
+	htmlContent+='</pre>';
+	var myWindow = window.open("", "Title", "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=600,top="+0+",right="+100);
+	
+	myWindow.document.head.innerHTML = "<head><title>Chat Consult Transcript</title>"
+
+	myWindow.document.body.innerHTML = htmlContent;
+
+	myWindow.focus();
+
 }
