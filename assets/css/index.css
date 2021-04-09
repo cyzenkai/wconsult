@@ -2,6 +2,9 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   margin:0px;
   height:100%;
+  min-width:1600px;
+  width: auto !important;
+  width:1600px;
 }
 
 .navbar {
@@ -143,9 +146,10 @@ body {
 }
 
 .consult-container{
-  width:calc(100% - 541px);
+  width:calc(100% - 430px);
   height:calc(100% - 202px);
-  margin-left:500px;
+  min-width:360px;
+  margin-left:410px;
   margin-top:85px;
   background-color: white;
   z-index:20;
@@ -285,13 +289,15 @@ body {
 .message-options {
   width:calc(100% - 170px);
   background-color: #ddd;
-  overflow: auto;
+//  overflow: auto;
   z-index:20;
   position:fixed;
   right:0px;
   top: 44px; /* Stay at the top */
   padding:5px;
   overflow-x: hidden;
+  overflow-y: hidden;
+  white-space:nowrap;
 }
 
 .message-destination{
@@ -547,6 +553,7 @@ body {
 
 .title{
   font-weight:bold;
+  whitespace:nowrap;
 }
 
 .l2-dashboard, .voice-online{
@@ -568,8 +575,8 @@ body {
 .log-screen{
   top:0px;
   left:0px;
-  width:300px;
-  height:calc(100% - 202px);
+  width:210px;
+  height:calc(100% - 170px);
   margin-left:161px;
   margin-top:85px;
   background-color: white;
@@ -725,9 +732,9 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-  -webkit-transform: translateX(30px);
-  -ms-transform: translateX(30px);
-  transform: translateX(30px);
+  -webkit-transform: translateX(34px);
+  -ms-transform: translateX(34px);
+  transform: translateX(34px);
 }
 
 /* Rounded sliders */
@@ -737,6 +744,24 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+.slider:after
+{
+ content:'L2';
+ color: white;
+ display: block;
+ position: absolute;
+ transform: translate(-50%,-50%);
+ top: 50%;
+ left: 50%;
+ font-size: 10px;
+ font-family: Verdana, sans-serif;
+}
+
+input:checked + .slider:after
+{  
+  content:'CCT';
 }
 
 .fa-times-circle {
@@ -763,5 +788,30 @@ input:checked + .slider:before {
     67%    { background-color: #ffcbc7;color:black}
 		99%		{ background-color: #ffcbc7;color:white}
     100%    { background-color: #f58f87;color:black}
+}
 
-	}
+.newQueue{
+		animation: blinkingQueue 5s infinite;
+}
+
+@keyframes blinkingQueue{
+		0%		{ background-color: black;color:white}
+		50%		{ background-color: white;color:black}
+    100%    { background-color: black;color:white}
+}
+
+.consult-status {
+  width:calc(100% - 430px);
+  overflow: auto;
+  z-index:21;
+  padding-left:20px;
+  position:relative;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  align:center;
+  border-radius:20px;
+  margin-left:auto;
+  margin-right:auto;
+  whitespace: nowrap;
+  font-size:10px;
+}

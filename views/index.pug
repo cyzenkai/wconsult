@@ -3,11 +3,10 @@ html
     head
         meta(name='viewport' content='width=device-width, initial-scale=1')
         link(rel='stylesheet', href='/assets/css/index.css')
-        link(rel='stylesheet', href='/node_modules/font-awesome/4.7.0/css/font-awesome.css')
-        link(rel='stylesheet', href='/node_modules/font-awesome/4.7.0/css/solid.css')
         script(src='/assets/js/jquery-3.4.1.min.js')
         script(src='/assets/js/socket/socket.io.js')
         script(src='/assets/js/createjs-2013.09.25.min.js')
+        script(src='https://use.fontawesome.com/f2c95389ba.js')
                 
         script(src='/assets/js/jquery.mark.min.js')
         script(src='/assets/js/jqueryui/jquery-ui.js')
@@ -22,7 +21,7 @@ html
                     i.fa.fa-fw.fa-envelope
                     |  New Consult
                 if((userLevel!='2')&&(userType!='TM'))
-                    a#rma-new(href='#')
+                    a#rma-new.hiddenDiv(href='#')
                         i.fa.fa-fw.fa-envelope
                         |  RMA Approval
                 a.queue-button(href='#' onclick='showQueue();')
@@ -38,7 +37,7 @@ html
                     .waiting-label Waiting Experts:
                     .waiting-list
                     br
-                    .available-label Available L2:
+                    .available-label Available L2/TM:
                     .available-list
                 .queue-window.cct-dashboard
                     .title CCT Consult
@@ -84,7 +83,7 @@ html
                 .lobby-window.support-online
                     .title Support
                     .online-label TM Online:
-                    #L1TM.online-list
+                    #TMTM.online-list
                     br
                     .online-label SME Online:
                     #L1SME.online-list
@@ -95,11 +94,10 @@ html
                 span#consult-close.close &times;
                 .row
                     .column 
-                        | L2 Consult 
+                        | Type:
                         label.switch
                             input#consult-entry-type(type='checkbox')
                             span.slider.round
-                        | &nbsp;CCT Consult 
                 .row
                     .column
                         | Case Number: 
@@ -180,6 +178,11 @@ html
                     .consult-entry-clear.button-link(onclick='clearConsultForm();') Clear Form
                 .row
                     #consult-entry-error.column.hiddenDiv Missing details. Please complete.
+        #duplicate-window.modal
+            .modal-content
+                .row
+                    .column
+                        | New consult window opened. Please close this window.
         .templates
             .consult-container-template
                 .message-options
@@ -187,6 +190,7 @@ html
                     .message-options-close.button-link Close Consult
                     |&nbsp;
                     span.duration 00:00:00
+                    span.consult-status
                 .log-screen
                     input#consult_id(type='text' hidden='')
                     .row.consult
@@ -238,6 +242,7 @@ html
                         .column
                             select#consult_opportunity1(style='width:100%')
                                 option(value='Technical') Technical
+                                option(value='Process') Process
                                 option(value='Comms') Comms
                                 option(value='Others') Others
                             br
@@ -255,42 +260,9 @@ html
                         .column
                             input#consult_TM(type='text' style='width:100%' readonly='')
                     br
-                    span.consult_add.hiddenDiv
-                        button#save_consult_button(onclick="save_consult(\
-                        $('#L1_list_consult_source'),\
-                        JSON.parse(getCookie('userdetails')).users_CES,\
-                        $('#consult_casenumber'),\
-                        $('#consult_product'),\
-                        $('#consult_duration'),\
-                        $('#consult_durationreason'),\
-                        $('#consult_invalidreason'),\
-                        $('input[name=consult_callhandler]:checked'),\
-                        $('#consult_opportunity1'),\
-                        $('#consult_opportunity2'),\
-                        new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));$('#save_consult_button').attr('disabled','true');")
-                          | Save
-                    span.consult_edit.hiddenDiv
-                        button(onclick="update_consult(\
-                        $('#consult_id').val(),\
-                        $('#L1_list_consult_source').val(),\
-                        JSON.parse(getCookie('userdetails')).users_CES,\
-                        $('#consult_casenumber').val(),\
-                        $('#consult_product').val(),\
-                        $('#consult_duration').val(),\
-                        $('#consult_durationreason').val(),\
-                        $('#consult_invalidreason').val(),\
-                        $('#consult_opportunity1').val(),\
-                        $('#consult_opportunity2').val(),\
-                        $('#consult_feedback').val(),\
-                        $('#consult_commitment').val(),\
-                        new Date().toLocaleString('en-US', {timeZone: 'Asia/Manila'}));")
-                          | Update
-                    br
-                    br
-                    #consult_status
                 .consult-bar
                     span.consult-file-button.button-link
-                        i.fa.fa-fw.fa-paperclip
+                        i.fa.fa-fw.fa-paperclip.hiddenDiv
                     span.consult-send-button.button-link
                         i.fa.fa-fw.fa-send-o
                     textarea.consult-input(rows='5')
@@ -300,7 +272,7 @@ html
                     .message-options-close.button-link Close Chat
                 .chat-bar
                     span.chat-file-button.button-link
-                        i.fa.fa-fw.fa-paperclip
+                        i.fa.fa-fw.fa-paperclip.hiddenDiv
                     span.chat-send-button.button-link
                         i.fa.fa-fw.fa-send-o
                     textarea.chat-input(rows='5')

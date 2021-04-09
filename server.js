@@ -201,6 +201,7 @@ app.post("/api/consults/add", (req, res, next) => {
     var data = {
         consults_L1:req.body.L1_list_consult_source,
         consults_L2:req.body.L2_list_consult,
+        consults_type:req.body.consult_type.toUpperCase(),
         consult_casenumber:req.body.consult_casenumber,
         consult_product:req.body.consult_product,
         consult_duration:req.body.consult_duration,
@@ -210,14 +211,13 @@ app.post("/api/consults/add", (req, res, next) => {
         consult_opportunity:req.body.consult_opportunity,
         consult_timestamp:req.body.consult_timestamp,
         consult_summary:req.body.consult_summary,
-        consult_room:req.body.consult_room
+        consult_room:req.body.consult_room,
+        consult_transcript:req.body.consult_transcript
     }
-      
-
     
     console.log(data);
-    var sql ='INSERT INTO consult_log (consults_L1,consults_L2,consults_casenumber,consults_product,consults_duration,consults_durationreason,consults_followedcallhandler,consults_reason,consults_opportunity,consults_timestamp,consults_summary,consults_room) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'
-    var params =[data.consults_L1,data.consults_L2,data.consult_casenumber,data.consult_product,data.consult_duration,data.consult_durationreason,data.consult_callhandler,data.consult_invalidreason,data.consult_opportunity,data.consult_timestamp,data.consult_summary,data.consult_room];
+    var sql ='INSERT INTO consult_log (consults_L1,consults_L2,consults_type,consults_casenumber,consults_product,consults_duration,consults_durationreason,consults_followedcallhandler,consults_reason,consults_opportunity,consults_timestamp,consults_summary,consults_room) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)'
+    var params =[data.consults_L1,data.consults_L2,data.consults_type,data.consult_casenumber,data.consult_product,data.consult_duration,data.consult_durationreason,data.consult_callhandler,data.consult_invalidreason,data.consult_opportunity,data.consult_timestamp,data.consult_summary,data.consult_room];
 	  console.log(sql);
     db.query(sql, params, function (err, result) {
         if (err){
@@ -225,12 +225,24 @@ app.post("/api/consults/add", (req, res, next) => {
             console.log(err.message);
             return;
         }
-        res.json({
-            "message": "success",
-            "data": data,
-            "id" : this.lastID
-            
-        })
+      
+        var sql ='INSERT INTO transcript (transcript_room,transcript_text) VALUES (?,?)'
+        var params =[data.consult_room,data.consult_transcript];
+        console.log(sql);
+        db.query(sql, params, function (err, result) {
+            if (err){
+                //res.status(400).json({"error": err.message})
+                console.log(err.message);
+                return;
+            }
+            res.json({
+                "message": "success",
+                "data": data,
+                "id" : this.lastID
+
+            })
+
+        });
 
     });
     
@@ -851,9 +863,11 @@ var L2Waiting=[];
 var RMAWaiting=[];
 var ongoingConsult=[];
 var socketCES;
-
+var serverRefresh=true;
+var reloaded=setInterval(function(){serverRefresh=false;clearInterval(reloaded)},5000);
 io.on('connection', function(socket){
     //console.log(socket);
+    
     var userID;
     var ip = socket.handshake.address;
     var traineeAvail = false;
@@ -861,6 +875,9 @@ io.on('connection', function(socket){
     userID=socket.id;
 
     socket.on('setSocketID',function(data){
+        if(serverRefresh){
+           io.to(userID).emit('reload window');
+        }
         var userdata={
             id:userID,
             ces:data.user.users_CES,
@@ -869,22 +886,25 @@ io.on('connection', function(socket){
             type:data.user.users_type.split(" ")[2]
         }
         if(onlineUsers.findIndex(item => item.ces === userdata.ces)>=0){
+            io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === userdata.ces)].id).emit('duplicate window');
             onlineUsers[onlineUsers.findIndex(item => item.ces === userdata.ces)].id=userID;
         }else{
             onlineUsers.push(userdata);
         }
+        console.log(onlineUsers);
         io.to(userID).emit('user list',onlineUsers);
         io.to(userID).emit('ongoing list',ongoingConsult);
-        io.to(userID).emit('CCTwaiting list',CCTWaiting);
-        io.to(userID).emit('L2waiting list',L2Waiting);
-        io.to(userID).emit('RMAwaiting list',RMAWaiting);
+        io.to(userID).emit('waiting list',CCTWaiting);
+        io.to(userID).emit('waiting list',L2Waiting);
+        io.to(userID).emit('waiting list',RMAWaiting);
         socket.broadcast.emit('user connect',userdata);
         var ongoingUser=(ongoingConsult.filter(obj => {return obj.consultant.ces === userdata.ces})).concat(ongoingConsult.filter(obj => {return obj.consultee.ces === userdata.ces}))
         console.log(ongoingUser);
         ongoingUser.forEach(function(ongoing){
+            socket.to(ongoing.room).emit('user reconnected to room',ongoing);
             console.log("for each ongoing");
             console.log(userdata.id);
-            io.to(userdata.id).emit('join room',ongoing);
+            io.to(userdata.id).emit('join room',ongoing,1);
             ongoing.messages.forEach(function(message){
               console.log("for each message");
               io.to(userdata.id).emit('consult message',message);
@@ -898,6 +918,10 @@ io.on('connection', function(socket){
         //console.log(onlineUsers[onlineUsers.findIndex(item => item.id === userID)].ces);
         if(onlineUsers.findIndex(item => item.id === userID)>=0){
             socket.broadcast.emit('user disconnect',onlineUsers[onlineUsers.findIndex(item => item.id === userID)].ces);
+            var ongoingUser=(ongoingConsult.filter(obj => {return obj.consultant.ces === onlineUsers[onlineUsers.findIndex(item => item.id === userID)].ces})).concat(ongoingConsult.filter(obj => {return obj.consultee.ces === onlineUsers[onlineUsers.findIndex(item => item.id === userID)].ces}))
+            ongoingUser.forEach(function(ongoing){
+                socket.to(ongoing.room).emit('user disconnected from room',ongoing);
+            })
             onlineUsers.splice(onlineUsers.findIndex(item => item.id === userID), 1);
         }
         
@@ -912,11 +936,14 @@ io.on('connection', function(socket){
         console.log(data);
         data.requestTime=nowDate;
         switch(data.type){
-            case "CCT":if(CCTWaiting.findIndex(item => item.casenum === data.casenum)<0){
+            case "CCT":if(CCTWaiting.findIndex(item => item.casenum === data.casenum)>0){
+                io.to(socket.id).emit('reject consult','Consult for case number already in queue.');
+            }else if(ongoingConsult.findIndex(item => item.casenum === data.casenum)>0){
+                io.to(socket.id).emit('reject consult','Consult for case number ongoing.');
+            }else{
                 CCTWaiting.push(data);
                 io.emit('consult waiting',data);
-            }else{
-                io.to(socket.id).emit('reject consult','case');
+                console.log(CCTWaiting);
             }
             break;
             case "L2":if(L2Waiting.findIndex(item => item.casenum === data.casenum)>0){
@@ -926,6 +953,7 @@ io.on('connection', function(socket){
             }else{
                 L2Waiting.push(data);
                 io.emit('consult waiting',data);
+                console.log(L2Waiting);
             }
             break;
             case "RMA":if(RMAWaiting.findIndex(item => item.casenum === data.casenum)<0){
@@ -936,6 +964,7 @@ io.on('connection', function(socket){
             }
             break;
         }
+        
         
     })
 
@@ -950,72 +979,96 @@ io.on('connection', function(socket){
         switch(data.type){
             case "l2":
                 if(L2Waiting.length>0){
-                    if(onlineUsers.findIndex(item => item.ces === L2Waiting[0].ces)>=0){
-                        var consultPop=L2Waiting.shift();
-                        console.log('consultPop')
-                        console.log(consultPop);
-                        console.log('L2Waiting');
-                        console.log(L2Waiting);
-                        randomRoom+=consultPop.ces.toString().substr(consultPop.ces.toString().length-3,3)+''+data.ces.toString().substr(data.ces.toString().length-3,3);
-                        var consultData={
-                          type:data.type,
-                          consultee:{
-                            ces:consultPop.ces,
-                            name:consultPop.name
-                          }, 
-                          consultant:{
-                            ces:data.ces,
-                            name:onlineUsers[onlineUsers.findIndex(item => item.ces === data.ces)].name
-                          },
-                          room:randomRoom,
-                          casenum:consultPop.casenum,
-                          device:consultPop.device,
-                          summary:consultPop.summary,
-                          reason:consultPop.reason,
-                          requestTime:consultPop.requestTime,
-                          messages:[]
+                    L2Waiting.every(function(waiting,index){
+                        if(onlineUsers.findIndex(item => item.ces === L2Waiting[index].ces)>=0){
+                            console.log(waiting.usertype);
+                            console.log(data.usertype);
+                            if(waiting.usertype+" "+waiting.lob.split(" ")[0]!=data.usertype+" "+data.userlob){
+                                var consultPop=L2Waiting.splice(index,1)[0];
+                                console.log('consultPop')
+                                console.log(consultPop);
+                                console.log('L2Waiting');
+                                console.log(L2Waiting);
+                                randomRoom+=consultPop.ces.toString().substr(consultPop.ces.toString().length-3,3)+''+data.ces.toString().substr(data.ces.toString().length-3,3);
+                                var consultData={
+                                  type:data.type,
+                                  consultee:{
+                                    ces:consultPop.ces,
+                                    name:consultPop.name
+                                  }, 
+                                  consultant:{
+                                    ces:data.ces,
+                                    name:onlineUsers[onlineUsers.findIndex(item => item.ces === data.ces)].name
+                                  },
+                                  room:randomRoom,
+                                  casenum:consultPop.casenum,
+                                  device:consultPop.device,
+                                  summary:consultPop.summary,
+                                  reason:consultPop.reason,
+                                  requestTime:consultPop.requestTime,
+                                  messages:[]
+                                }
+                                consultData.consultstarted=nowDate;
+                                console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id);
+                                io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData,0);
+                                io.to(socket.id).emit('join room',consultData,0);
+                                ongoingConsult.push(consultData);
+                                io.emit('add ongoing',consultData);
+                                io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum});
+                                return false;
+                            }else{
+                                return true;  
+                            }
+                            
                         }
-                        consultData.consultstarted=nowDate;
-                        console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id);
-                        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData);
-                        io.to(socket.id).emit('join room',consultData);
-                        ongoingConsult.push(consultData);
-                        io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum});
-                    }
+                    })
                 }
             break;
             case "cct":
-                if((onlineUsers.findIndex(item => item.ces === CCTWaiting[0].ces)>=0)&&(CCTWaiting.length>0)){
-                    var consultPop=CCTWaiting.shift();
-                    console.log('consultPop')
-                    console.log(consultPop);
-                    console.log('CCTWaiting');
-                    console.log(CCTWaiting);
-                    randomRoom+=consultPop.ces.toString().substr(consultPop.ces.toString().length-3,3)+''+data.ces.toString().substr(data.ces.toString().length-3,3);
-                    var consultData={
-                      type:data.type,
-                      consultee:{
-                        ces:consultPop.ces,
-                        name:consultPop.name
-                      }, 
-                      consultant:{
-                        ces:data.ces,
-                        name:onlineUsers[onlineUsers.findIndex(item => item.ces === data.ces)].name
-                      },
-                      room:randomRoom,
-                      casenum:consultPop.casenum,
-                      device:consultPop.device,
-                      summary:consultPop.summary,
-                      reason:consultPop.reason,
-                      requestTime:consultPop.requestTime,
-                      messages:[]
-                    }
-                    consultData.consultstarted=nowDate;
-                    console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id);
-                    io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData);
-                    io.to(socket.id).emit('join room',consultData);
-                    ongoingConsult.push(consultData);
-                    io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum});
+                if(CCTWaiting.length>0){
+                    CCTWaiting.every(function(waiting,index){
+                        if(onlineUsers.findIndex(item => item.ces === CCTWaiting[index].ces)>=0){
+                            console.log(waiting.usertype);
+                            console.log(data.usertype);
+                            if(waiting.usertype!=data.usertype){
+                                var consultPop=CCTWaiting.splice(index,1)[0];
+                                console.log('consultPop')
+                                console.log(consultPop);
+                                console.log('CCTWaiting');
+                                console.log(CCTWaiting);
+                                randomRoom+=consultPop.ces.toString().substr(consultPop.ces.toString().length-3,3)+''+data.ces.toString().substr(data.ces.toString().length-3,3);
+                                var consultData={
+                                  type:data.type,
+                                  consultee:{
+                                    ces:consultPop.ces,
+                                    name:consultPop.name
+                                  }, 
+                                  consultant:{
+                                    ces:data.ces,
+                                    name:onlineUsers[onlineUsers.findIndex(item => item.ces === data.ces)].name
+                                  },
+                                  room:randomRoom,
+                                  casenum:consultPop.casenum,
+                                  device:consultPop.device,
+                                  summary:consultPop.summary,
+                                  reason:consultPop.reason,
+                                  requestTime:consultPop.requestTime,
+                                  messages:[]
+                                }
+                                consultData.consultstarted=nowDate;
+                                console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id);
+                                io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData);
+                                io.to(socket.id).emit('join room',consultData);
+                                ongoingConsult.push(consultData);
+                                io.emit('add ongoing',consultData);
+                                io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum});
+                                return false;
+                            }else{
+                                return true;  
+                            }
+                            
+                        }
+                    })
                 }
             break;
             case "rma":
@@ -1092,7 +1145,7 @@ io.on('connection', function(socket){
         if(ongoingConsult.findIndex(item => item.room === consultData.room)>=0){
             socket.to(consultData.room).emit('end consult',consultData);
             ongoingConsult.splice(ongoingConsult.findIndex(item => item.room === consultData.room),1);
-            io.emit('delete ongoing',consultData.room);  
+            io.emit('delete ongoing',consultData.room);
         }
         
     })

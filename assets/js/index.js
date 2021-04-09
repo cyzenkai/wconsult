@@ -2,6 +2,8 @@ var clickOrder=[];
 var timeinterval=[];
 var userID;
 var socket;
+var consultStatus;
+var notification;
 
 try{
   var user=JSON.parse(getCookie('userdetails'));
@@ -20,23 +22,53 @@ try{
 
 
 $(function() {
-
-
-
-  console.log(userlevel+" "+usertype);
-  switch(userlevel+" "+usertype){
-    case "1 TM":
-    case "2 Voice":$('.get-consult-l2').css('display','block');$('.get-consult-rma').css('display','block');break;
-    case "1 CCT":$('.get-consult-cct').css('display','block');
+  if (Notification.permission === "granted") {
+		console.log("permission granted")		;
+	} else{
+		Notification.requestPermission().then(permission => {
+			console.log("permission granted");
+			
+		});
+	}
+  
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+      console.log('visible');
+      // The tab has become visible so clear the now-stale Notification.
+      try{
+        notification.close();
+      }catch(err){
+        
+      }
+    }
+  });
+  
+  
+  console.log(userLOB.split(" ")[0]+" "+userlevel);
+  switch(userLOB.split(" ")[0]+" "+userlevel){
+    case "TM 1":
+    case "TM 2":
+    case "L2 2":$('.get-consult-l2').css('display','block');$('.get-consult-rma').css('display','block');break;
+    case "CCT 1":$('.get-consult-cct').css('display','block');break;
   }
 
   socket = io(document.location.hostname+(document.location.port==''?"":":"+document.location.port));
   console.log(socket.id);
   socket.on('connect', () => {
-    data = {user: user, name: expertName, userID: socket.id, dateLog: new Date().toLocaleString("en-US", {timeZone: "Asia/Manila"})};
+    var data = {user: user, name: expertName, userID: socket.id, dateLog: new Date().toLocaleString("en-US", {timeZone: "Asia/Manila"})};
     socket.emit('setSocketID', data);
     userID=data.userID;
     console.log(userID);
+  });
+  
+  socket.on('duplicate window',function(){
+      $('#duplicate-window').css('display','block');
+  });
+  
+  socket.on('reload window',function(){
+    console.log('reload');
+    //window.location.reload(true);
+    location.reload(true);
   });
 
   socket.on('consult waiting', function(data){
@@ -48,15 +80,17 @@ $(function() {
 
   socket.on('user connect',function(data){
     addOnline(data.type,data.lob,data.ces,data.name,data.type.substr(0,2));
+    addAvailable(data);
   });
 
   socket.on('user list',function(data){
     data.forEach(function(user){
       addOnline(user.type,user.lob,user.ces,user.name,user.type.substr(0,2));
+      addAvailable(user);
     })
   });
   
-  socket.on('CCTwaiting list',function(data){
+  socket.on('waiting list',function(data){
     data.forEach(function(user){
       addWaiting(user);
     })
@@ -75,10 +109,27 @@ $(function() {
       }
     })
   });
+  
+  socket.on('add ongoing',function(data){
+      addOngoing(data);
+  })
 
   socket.on('user disconnect',function(data){
     console.log(data)
     $('.online-list-item#'+data).remove();
+    
+  });
+  
+  socket.on('user disconnected from room',function(user){
+    clearInterval(consultStatus);
+    $('#'+user.room+'-window .consult-status').text((user.consultant.ces==userCES?user.consultee.name:user.consultee.name)+" has disconnected. Waiting for reconnection.");
+    consultStatus= 'reload window'
+  });
+  
+  socket.on('user reconnected to room',function(user){
+    clearInterval(consultStatus);
+    $('#'+user.room+'-window .consult-status').text((user.consultant.ces==userCES?user.consultee.name:user.consultee.name)+" has reconnected.");
+    consultStatus= setInterval(function(){$('#'+user.room+'-window .consult-status').text('');},5000);
   });
 
   socket.on('cancel consult',function(data){
@@ -90,17 +141,19 @@ $(function() {
   });
   
   socket.on('delete ongoing',function(room){
-    var randomClass=$('.ongoing-list-item#'+room).attr("class").split(/\s+/)[1];
-    clearInterval(timeinterval[randomClass]);
-    console.log(timeinterval[randomClass]);
-    $('.ongoing-list-item#'+room).remove();
+    if($('.ongoing-list-item#'+room).length>0){
+        var randomClass=$('.ongoing-list-item#'+room).attr("class").split(/\s+/)[1];
+        clearInterval(timeinterval[randomClass]);
+        console.log(timeinterval[randomClass]);
+        $('.ongoing-list-item#'+room).remove();
+    }
   });
 
-  socket.on('join room',function(consultData){
+  socket.on('join room',function(consultData,reconnect){
     console.log("joining room");
     console.log(consultData);
     socket.emit('join room',consultData.room);
-    newConsult(consultData);
+    newConsult(consultData,reconnect);
   })
   
   socket.on('consult message',function(messageData){
@@ -111,6 +164,7 @@ $(function() {
   
   socket.on('end consult',function(consultData){
     console.log("end consult received");
+    $('#'+consultData.room+'-window .consult-status').text((consultData.consultant.ces==userCES?consultData.consultee.name:consultData.consultee.name)+" has ended the consult.");
     endConsult(consultData);
   })
 
@@ -157,8 +211,12 @@ $(function() {
 
   $('#consult-new').on('click',function() {
     $('#consult-entry').css('display','block');
-    if(userlevel+" "+usertype=='2 Voice'){
+    if(userLOB.split(" ")[0]+" "+userlevel=='L2 2'){
       $('#consult-entry-type').prop('checked',true);
+      $('#consult-entry-type').change();
+      $('#consult-entry-type').prop('disabled','disabled');
+    }else if(userLOB.split(" ")[0]+" "+userlevel=='CCT 1'){
+      $('#consult-entry-type').prop('checked',false);
       $('#consult-entry-type').change();
       $('#consult-entry-type').prop('disabled','disabled');
     }
@@ -216,7 +274,7 @@ function updateTimer(timer,startTime){
 //  console.log(('0' + t.hours).slice(-2)+('0' + t.minutes).slice(-2)+('0' + t.seconds).slice(-2));
   $('.'+timer+' .duration').html(('0' + t.hours).slice(-2)+":"+('0' + t.minutes).slice(-2)+":"+('0' + t.seconds).slice(-2));
   if(($('.'+timer+' .duration').attr('id')==undefined)&&($('.'+timer+' .longConsult').hasClass('hiddenDiv'))){
-      if((parseInt(('0' + t.minutes).slice(-2))>=0)&&(parseInt(('0' + t.seconds).slice(-2))>=20)){
+      if((parseInt(('0' + t.minutes).slice(-2))>=10)&&(parseInt(('0' + t.seconds).slice(-2))>=0)){
           $('.'+timer+' .longConsult').removeClass('hiddenDiv');
       }
   }
@@ -243,10 +301,7 @@ function getElapsed(starttime){
   };
 }
 
-
-
-function newConsult(consultData){
-  addOngoing(consultData);
+function newConsult(consultData,reconnect){
   var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
   clickOrder.push(consultData.room);
   $('.consult-link-template').clone().attr('class','consult-link').attr('id',consultData.room+'-link').addClass('side-link').append('<b>'+consultData.type.toUpperCase()+' Consult</b><br>Case Number: '+consultData.casenum+'<br>Room: '+consultData.room+'<br>'+(consultData.consultee.ces==userCES?consultData.consultant.name:consultData.consultee.name)).appendTo('.sidebar');
@@ -256,7 +311,9 @@ function newConsult(consultData){
     $('.'+randomClass+'>.log-screen').remove();
     $('.'+randomClass).css('width','calc(100% - 200px)');
     $('.'+randomClass).css('margin-left','161px');
-    //sendMessage(consultData.room,consultData.consultee.name,'Hi! Requesting assistance with case number '+consultData.casenum+' with device '+consultData.device+', please see summary of case:\n'+consultData.summary);
+    if(!reconnect){
+      sendMessage(consultData.room,consultData.consultee.name,'Hi! Requesting assistance with case number '+consultData.casenum+' with device '+consultData.device+', please see summary of case:\n'+consultData.summary);
+    }
   }
   timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,consultData.consultstarted)},1000);
   if(consultData.consultant.ces==userCES){
@@ -290,7 +347,7 @@ function newConsult(consultData){
     $('#'+consultData.room+'.consult-input').val('').focus();
   });
   $('.'+randomClass+'>.message-options>.message-options-transcript').click(function(){
-    showTranscript(getTranscript(consultData.room));
+    showTranscript(getTranscript(consultData));
   });
   $('.'+randomClass+'>.message-options>.message-options-close').click(function(){
     closeConsult(consultData);
@@ -402,9 +459,9 @@ function closeConsult(consultData){
     consultData.opportunity2=$('#'+consultData.room+'-window #consult_opportunity2-'+randomClass).val();
     consultData.timestamp=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
     console.log("has log screen");
-    saveConsult(consultData.consultee.ces,consultData.consultant.ces,consultData.casenum,consultData.device,
+    saveConsult(consultData.consultee.ces,consultData.consultant.ces,consultData.type,consultData.casenum,consultData.device,
                consultData.duration,consultData.durationreason,consultData.reason,consultData.callhandler,
-               consultData.opportunity1,consultData.opportunity2,consultData.timestamp,consultData.summary,consultData.room);
+               consultData.opportunity1,consultData.opportunity2,consultData.timestamp,consultData.summary,consultData.room,getTranscript(consultData));
   }
   socket.emit('end consult',consultData);
   $('#'+consultData.room+'-link').remove();
@@ -417,15 +474,17 @@ function closeConsult(consultData){
 }
 
 function endConsult(consultData){
-  console.log("blah blah has left the chat");
-  console.log($('#'+consultData.room+'-window').attr("class").split(/\s+/)[1]);
-  var randomClass=$('#'+consultData.room+'-window').attr("class").split(/\s+/)[1];
-  $('#'+consultData.room+'-link').addClass('endedConsult');
-  clearInterval(timeinterval[randomClass]);
+  $('#'+consultData.room+'-window .duration').text(consultData.duration);
+  
+  if($('#'+consultData.room+'-window').length>0){
+    var randomClass=$('#'+consultData.room+'-window').attr("class").split(/\s+/)[1];
+    $('#'+consultData.room+'-link').addClass('endedConsult');
+    clearInterval(timeinterval[randomClass]);  
+  }
 }
 
 function closeChat(consultData){
-  //not
+  //for review
   getTranscript(consultData);
   $('#'+consultData.room+'-link').remove();
   $('#'+consultData.room+'-window').remove();
@@ -438,8 +497,9 @@ function closeChat(consultData){
 }
 
 function getTranscript(consultData){
+  console.log(consultData);
   var content="Case Number: "+consultData.casenum+"<br>";
-  content+="Summary: "+consultData.summary+"<br>";
+  content+="Summary: <br>"+consultData.summary+"<br>";
   content+="Consultant: "+consultData.consultant.name+"<br>";
   content+="Consultee: "+consultData.consultee.name+"<br>";
   content+="Request Time: "+consultData.requestTime+"<br>";
@@ -447,8 +507,8 @@ function getTranscript(consultData){
   content+="Duration: "+consultData.duration+"<br><br>";
   content+="Transcript <br><br>";
   $('.'+consultData.room+'-message').each(function(message){
-    content+=$( this ).children('.message-info').children('.message-time').text()+"<br>";
-    content+=$( this ).children('.message-name').text()+": "+$( this ).children('.message').text()+"<br>";
+    content+="<b>"+$( this ).children('.message-info').children('.message-time').html()+" "+$( this ).children('.message-name').text()+"</b><br>";
+    content+=$( this ).children('.message').html()+"<br>";
     //console.log(message.children('.message-name'));
     //console.log(message.children('.message-info').children('.message-time'));
     //console.log(message.children('.message'));
@@ -467,13 +527,13 @@ var messageData={
   room:room,
   name:name,
   ces:userCES,
-  message:message,
+  message:message.replace(/\r\n|\r|\n/g,"<br />"),
   msgClass:randomClass
 }
   socket.emit('consult message',messageData);
   $('.message-template').clone().attr('class','message-source').addClass(randomClass).addClass(room+'-message').appendTo('#'+room+'-window');
   $('.'+randomClass+'>.message-name').html(name).addClass('hiddenDiv');
-  $('.'+randomClass+'>.message').html(message);
+  $('.'+randomClass+'>.message').html(messageData.message);
   //$('.'+randomClass+'>.message-info>.message-status').html('Delivered');
   $('.'+randomClass+'>.message-info>.message-time').html(nowTime);
   $('.'+randomClass+'>.message-info').css('min-width',parseInt($('.'+randomClass+'>.message').css('width'))+parseInt($('.'+randomClass+'>.message').css('padding-left'))+parseInt($('.'+randomClass+'>.message').css('padding-right')));
@@ -510,23 +570,14 @@ function displayMessage(msgClass,room,name,message,flag){
   
 }
 
-function addAvailable(type,CES,name,lob,number){
-var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
-  $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',CES).addClass(randomClass).appendTo('.'+type.toLowerCase()+'-dashboard>.available-list');
-  $('.'+randomClass+'>.available-list-item-lob').addClass('lob-'+lob);
-  $('.'+randomClass+'>.available-list-item-number').html(number+'. ');
-  $('.'+randomClass+'>.available-list-item-name').html(name);
-}
-
 function addWaiting(data){
-  
-var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
-var lobIcon='';
-console.log(data);
+  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  var lobIcon='';
+  console.log(data);
   $('.waiting-list-item-template').clone().attr('class','waiting-list-item').attr('id',data.casenum).addClass(randomClass).appendTo('.'+data.type.toLowerCase()+'-dashboard>.waiting-list');
   $('.'+randomClass+'>.waiting-list-item-lob').addClass('lob-'+data.lob.substr(0,2));
   if(data.ces==userCES){
-    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+data.type.toLowerCase()+'","'+data.casenum+'")><span class="fa fa-fw fa-times-circle">X</span></a>'+data.name);
+    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+data.type.toLowerCase()+'","'+data.casenum+'")><span class="fa fa-fw fa-times-circle"></span></a>'+data.name);
   }else{
     $('.'+randomClass+'>.waiting-list-item-name').html(data.name);
   }
@@ -534,6 +585,21 @@ console.log(data);
   console.log(data.requestTime);
   timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,data.requestTime)},1000);
   console.log(timeinterval);
+  
+  switch(userLOB.split(" ")[0]+" "+userlevel){
+    case "TM 1":
+    case "TM 2":
+    case "Voice 2":if((data.type=='L2')&&(data.ces!=userCES)){
+      $('.queue-button').addClass('newQueue');
+      showNotification(data.type.toUpperCase()+' consult waiting','From:'+data.name+'\nReason:'+data.reason)
+    };
+    break;
+    case "CCT 1":if((data.type=='CCT')&&(data.ces!=userCES)){
+      $('.queue-button').addClass('newQueue')
+      showNotification(data.type.toUpperCase()+' consult waiting','From:'+data.name+'\nReason:'+data.reason)
+    };
+    break;
+  }
 }
 
 function addOngoing(data){
@@ -551,14 +617,35 @@ var lobIcon='';
   timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,data.consultstarted)},1000);
 }
 
-function addOnline(type,subtype,CES,name,lob){
-  console.log(type,subtype,CES,name,lob);
-  if($('#'+CES).hasClass('online-list-item')){
-    $('.online-list-item#'+CES).remove();
-  }
+function addAvailable(data){
   var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
   var gentype;
   var lobIcon='';
+  console.log(data);
+  switch(data.lob+" "+data.type){
+    case 'CCT Voice':
+      $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',data.ces).addClass(randomClass).appendTo('.cct-dashboard>.available-list');
+      break;
+    case 'L2 Voice' :
+    case 'L1 TM':
+      $('#'+data.ces+'.available-list-item').remove();
+      $('#'+data.ces+'.available-list-item').remove();
+      $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',data.ces).addClass(randomClass).appendTo('.l2-dashboard>.available-list');
+      $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',data.ces).addClass(randomClass).appendTo('.rma-dashboard>.available-list');
+      break;
+  }
+  
+  $('.'+randomClass+'>.available-list-item-lob').addClass('lob-'+data.lob);
+  $('.'+randomClass+'>.available-list-item-number').html(data.number+'. ');
+  $('.'+randomClass+'>.available-list-item-name').html(data.name);
+}
+
+function addOnline(type,subtype,CES,name,lob){
+  $('#'+CES+'.online-list-item').remove();
+  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  var gentype;
+  var lobIcon='';
+  console.log(type);
   switch(type){
     case "Voice":gentype="voice";break;
     case "Chat":gentype="nonvoice";break;
@@ -572,6 +659,8 @@ function addOnline(type,subtype,CES,name,lob){
   $('.online-list-item-template').clone().attr('class','online-list-item').attr('id',CES).addClass(randomClass).appendTo('.'+gentype+'-online>#'+subtype+type+'.online-list');
   $('.'+randomClass+'>.online-list-item-lob').addClass('lob-'+lob);
   $('.'+randomClass+'>.online-list-item-name').html(name);
+
+  
   /*if(CES!=userCES){
     $('.'+randomClass).on('click',function(event){
       popupChat(event,CES,name);
@@ -617,6 +706,7 @@ function showQueue(){
   $('.subcontainer').css('z-index','19')
   $('.consult-link').removeClass('active');
   $('.queue-container').css('z-index','20');
+  $('.queue-button').removeClass('newQueue');
 }
 
 function showLobby(){
@@ -669,7 +759,8 @@ function requestConsult(){
       reason:$('#consult-entry-reason').val(),
       device:$('#consult-entry-device').val(),
       summary:$('#consult-entry-summary').val().trim(),
-      lob:userLOB
+      lob:userLOB,
+      usertype:usertype
     }
     socket.emit('consult request', data);
     clearConsultForm();
@@ -681,7 +772,9 @@ function requestConsult(){
 function getConsult(type){
   var data={
     type:type,
-    ces:userCES
+    ces:userCES,
+    usertype:usertype,
+    userlob:userLOB.split(" ")[0]
   }
   console.log('getting consult');
   socket.emit('get consult',data);
@@ -730,12 +823,13 @@ function getDataRecord(api,callback,data){
 	};
 }
 
-function saveConsult(L1,L2,casenumber,product,duration,durationreason,reason,callhandler,opportunity1,opportunity2,datetime,summary,room){
+function saveConsult(L1,L2,type,casenumber,product,duration,durationreason,reason,callhandler,opportunity1,opportunity2,datetime,summary,room,transcript){
   var error=false;
 
   var data={
     L1_list_consult_source:L1,
     L2_list_consult:L2,
+    consult_type:type,
     consult_casenumber:casenumber,
     consult_product:product,
     consult_duration:duration,
@@ -746,6 +840,7 @@ function saveConsult(L1,L2,casenumber,product,duration,durationreason,reason,cal
     consult_timestamp:datetime,
     consult_summary:summary,
     consult_room:room,
+    consult_transcript:transcript
   }
   console.log(data);
 
@@ -781,3 +876,13 @@ function showTranscript(transcript){
 	myWindow.focus();
 
 }
+
+
+function showNotification(title,message) {
+		notification = new Notification("Click to Open: "+title, {
+		   body: message,
+		   icon: "/favicon.ico",
+		   requireInteraction: true 
+		})
+    notification.onclick = function(x) { window.focus(); $('.queue-button').click(); this.close(); };
+	}
