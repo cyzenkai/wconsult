@@ -159,7 +159,7 @@ $(function() {
   socket.on('consult message',function(messageData){
     console.log("message received");
     console.log(messageData);
-    displayMessage(messageData.msgClass,messageData.room,messageData.name,messageData.message,messageData.ces==userCES?"":"self");
+    displayMessage(messageData.msgClass,messageData.room,messageData.name,messageData.message,messageData.ces==userCES?"":"self",messageData.timeReceive);
   })
   
   socket.on('end consult',function(consultData){
@@ -520,7 +520,6 @@ function getTranscript(consultData){
 function sendMessage(room,name,message){
 var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
   
-  
 var nowTime=(((nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())<10)?('0'+(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())):(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours()))+":"+((nowDate.getMinutes()<10)?('0'+nowDate.getMinutes()):(nowDate.getMinutes()))+":"+((nowDate.getSeconds()<10)?('0'+nowDate.getSeconds()):(nowDate.getSeconds()))+(nowDate.getHours()>12?" PM":" AM");
 var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
 var messageData={
@@ -528,7 +527,7 @@ var messageData={
   name:name,
   ces:userCES,
   message:message.replace(/\r\n|\r|\n/g,"<br />"),
-  msgClass:randomClass
+  msgClass:randomClass,
 }
   socket.emit('consult message',messageData);
   $('.message-template').clone().attr('class','message-source').addClass(randomClass).addClass(room+'-message').appendTo('#'+room+'-window');
@@ -544,9 +543,9 @@ function setPinMessage(message){
   $('.team-container .message-options-pinned').html(message);
 }
 
-function displayMessage(msgClass,room,name,message,flag){
-  
-  var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+function displayMessage(msgClass,room,name,message,flag,timestamp){
+  console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
+  var nowDate=new Date((timestamp).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
   var nowTime=(((nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())<10)?('0'+(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())):(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours()))+":"+((nowDate.getMinutes()<10)?('0'+nowDate.getMinutes()):(nowDate.getMinutes()))+":"+((nowDate.getSeconds()<10)?('0'+nowDate.getSeconds()):(nowDate.getSeconds()))+(nowDate.getHours()>12?" PM":" AM");
   console.log('#'+room+'-window');
   if(flag=="self"){
@@ -577,7 +576,7 @@ function addWaiting(data){
   $('.waiting-list-item-template').clone().attr('class','waiting-list-item').attr('id',data.casenum).addClass(randomClass).appendTo('.'+data.type.toLowerCase()+'-dashboard>.waiting-list');
   $('.'+randomClass+'>.waiting-list-item-lob').addClass('lob-'+data.lob.substr(0,2));
   if(data.ces==userCES){
-    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+data.type.toLowerCase()+'","'+data.casenum+'")><span class="fa fa-fw fa-times-circle"></span></a>'+data.name);
+    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+data.type.toLowerCase()+'","'+data.casenum+'",$("#'+randomClass+'.duration").text()'+',true)><span class="fa fa-fw fa-times-circle"></span></a>'+data.name);
   }else{
     $('.'+randomClass+'>.waiting-list-item-name').html(data.name);
   }
@@ -589,7 +588,7 @@ function addWaiting(data){
   switch(userLOB.split(" ")[0]+" "+userlevel){
     case "TM 1":
     case "TM 2":
-    case "Voice 2":if((data.type=='L2')&&(data.ces!=userCES)){
+    case "L2 2":if((data.type=='L2')&&(data.ces!=userCES)){
       $('.queue-button').addClass('newQueue');
       showNotification(data.type.toUpperCase()+' consult waiting','From:'+data.name+'\nReason:'+data.reason)
     };
@@ -780,10 +779,12 @@ function getConsult(type){
   socket.emit('get consult',data);
 }
 
-function cancelConsult(type,casenum){
+function cancelConsult(type,casenum,duration,abandon){
   var data={
     type:type.toLowerCase(),
-    casenum:casenum
+    casenum:casenum,
+    duration:duration,
+    abandon:abandon
   }
   console.log("cancel consult");
   socket.emit('cancel consult',data)

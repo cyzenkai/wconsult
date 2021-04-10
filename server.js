@@ -1014,7 +1014,7 @@ io.on('connection', function(socket){
                                 io.to(socket.id).emit('join room',consultData,0);
                                 ongoingConsult.push(consultData);
                                 io.emit('add ongoing',consultData);
-                                io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum});
+                                io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum,abandon:false});
                                 return false;
                             }else{
                                 return true;  
@@ -1061,7 +1061,7 @@ io.on('connection', function(socket){
                                 io.to(socket.id).emit('join room',consultData);
                                 ongoingConsult.push(consultData);
                                 io.emit('add ongoing',consultData);
-                                io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum});
+                                io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum,abandon:false});
                                 return false;
                             }else{
                                 return true;  
@@ -1102,14 +1102,13 @@ io.on('connection', function(socket){
                     io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData);
                     io.to(socket.id).emit('join room',consultData);
                     ongoingConsult.push(consultData);
-                    io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum});
+                    io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum,abandon:false});
                 }
             break;
         }
     })
     socket.on('cancel consult',function(data){
         console.log(data);
-        console.log(L2Waiting);
         switch(data.type.toLowerCase()){
             case "l2":
                 io.emit('cancel consult',data);
@@ -1124,7 +1123,6 @@ io.on('connection', function(socket){
                 RMAWaiting.splice(RMAWaiting.findIndex(item => item.casenum === data.casenum),1);
             break;
         }
-        console.log(L2Waiting);
     })
     
     socket.on('join room',function(room){
@@ -1132,7 +1130,7 @@ io.on('connection', function(socket){
     })
   
     socket.on('consult message',function(message){
-        var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+        var nowDate=new Date();
         console.log("sending to room");
         if(ongoingConsult.findIndex(item => item.room === message.room)>=0){
             message.timeReceive=nowDate;
