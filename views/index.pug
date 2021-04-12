@@ -21,7 +21,7 @@ html
                     i.fa.fa-fw.fa-envelope
                     |  New Consult
                 if((userLevel!='2')&&(userType!='TM'))
-                    a#rma-new.hiddenDiv(href='#')
+                    a#rma-new(href='#')
                         i.fa.fa-fw.fa-envelope
                         |  RMA Approval
                 a.queue-button(href='#' onclick='showQueue();')
@@ -49,7 +49,7 @@ html
                     .available-list
                 .queue-window.rma-dashboard
                     .title RMA Consult
-                    span.get-consult.get-consult-rma.button-link(onclick="getConsult('l2');") Get Consult
+                    span.get-consult.get-consult-rma.button-link(onclick="getConsult('rma');") Get Consult
                     .waiting-label Waiting Experts:
                     .waiting-list
                     br
@@ -94,7 +94,7 @@ html
                 span#consult-close.close &times;
                 .row
                     .column 
-                        | Type:
+                        | Type: 
                         label.switch
                             input#consult-entry-type(type='checkbox')
                             span.slider.round
@@ -141,6 +141,12 @@ html
             .modal-content
                 span#rma-close.close &times;
                 .row
+                    .column 
+                        | Warranty: 
+                        label.rma-switch
+                            input#rma-entry-warranty(type='checkbox')
+                            span.rma-slider.round
+                .row
                     .column
                         | Case Number: 
                         br
@@ -152,37 +158,43 @@ html
                             option.selectheader(value='0' selected='' disabled='disabled') Select Device
                 .row
                     .column
-                        input(type='checkbox')
+                        | Serial Number: 
+                        br
+                        input#rma-entry-serialnumber.rma-entry-input(type='text' size='13' maxlength='13' onkeypress='return (event.charCode >= 48 && event.charCode <= 57) || (event.charCode >= 65 && event.charCode <= 90) || (event.charCode >= 97 && event.charCode <= 122)')
+                .row
+                    .column
+                        input#rma-entry-address(type='checkbox')
                         |  Address updated
-                    .column
-                        input(type='radio' name='warranty' value='IW' checked='checked')
-                        |  In-warranty
                 .row
                     .column
-                        input(type='checkbox')
+                        input#rma-entry-phone(type='checkbox')
                         |  Phone Number updated
-                    .column
-                        input(type='radio' name='warranty' value='OOW')
-                        |  Out-of-Warranty
                 .row
                     .column
-                        input(type='checkbox')
+                        input#rma-entry-pop(type='checkbox')
                         |  POP update
                 .row
                     .column
                         | Summary: 
                         br
-                        textarea#consult-entry-summary(rows='10')
+                        textarea#rma-entry-summary(rows='10')
                 .row
-                    .consult-entry-request.button-link(onclick='requestConsult();') Request Consult
-                    .consult-entry-clear.button-link(onclick='clearConsultForm();') Clear Form
+                    .rma-entry-request.button-link(onclick='requestRMA();') Request Approval
+                    .rma-entry-clear.button-link(onclick='clearRMAForm();') Clear Form
                 .row
-                    #consult-entry-error.column.hiddenDiv Missing details. Please complete.
+                    #rma-entry-error.column.hiddenDiv Missing details. Please complete.
         #duplicate-window.modal
             .modal-content
                 .row
                     .column
                         | New consult window opened. Please close this window.
+        #error-prompt.modal
+            .modal-content
+                span#error-close.close &times;
+                .row
+                    .column
+                      .error-prompt-message
+                      .error-prompt-ok.button-link OK
         .templates
             .consult-container-template
                 .message-options
@@ -210,9 +222,14 @@ html
                             input#L1_list_consult_source.L1_list.consult(style='width:100%' readonly='')
                     .row.consult
                         .column(style='width:auto;min-width:220px;')
-                            | Select Device:
+                            | Device:
                         .column
                             input#consult_product.consult(style='width:100%' readonly='')
+                    .row.consult.hiddenDiv.rmaserialnumber
+                        .column(style='width:auto;min-width:220px;')
+                            | Serial Number:
+                        .column
+                            input#consult_serial.consult(style='width:100%' readonly='')
                     .row.consult
                         .column(style='width:auto;min-width:220px;')
                             | Reason of Consult:
@@ -259,6 +276,11 @@ html
                             | Team Manager:
                         .column
                             input#consult_TM(type='text' style='width:100%' readonly='')
+                    .row.consult
+                        .column(style='width:auto;min-width:220px;')
+                            | Summary:
+                        .column#consult_summary
+                            
                     br
                 .consult-bar
                     span.consult-file-button.button-link

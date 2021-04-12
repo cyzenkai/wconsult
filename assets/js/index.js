@@ -96,10 +96,6 @@ $(function() {
     })
   });
   
-  socket.on('reject consult',function(error){
-    console.log(error);
-  });
-  
   socket.on('ongoing list',function(data){
     console.log("ongoing list");
     data.forEach(function(user){
@@ -153,7 +149,9 @@ $(function() {
     console.log("joining room");
     console.log(consultData);
     socket.emit('join room',consultData.room);
-    newConsult(consultData,reconnect);
+    if($('.'+consultData.room).length<1){
+      newConsult(consultData,reconnect);
+    }
   })
   
   socket.on('consult message',function(messageData){
@@ -166,6 +164,12 @@ $(function() {
     console.log("end consult received");
     $('#'+consultData.room+'-window .consult-status').text((consultData.consultant.ces==userCES?consultData.consultee.name:consultData.consultee.name)+" has ended the consult.");
     endConsult(consultData);
+  })
+  
+  socket.on('reject consult',function(message){
+    console.log('rejecting');
+    $('.error-prompt-message').html(message);
+    $('#error-prompt').css('display','block');
   })
 
 
@@ -214,16 +218,17 @@ $(function() {
     if(userLOB.split(" ")[0]+" "+userlevel=='L2 2'){
       $('#consult-entry-type').prop('checked',true);
       $('#consult-entry-type').change();
-      $('#consult-entry-type').prop('disabled','disabled');
+      $('#consult-entry-type').attr('disabled','disabled');
     }else if(userLOB.split(" ")[0]+" "+userlevel=='CCT 1'){
       $('#consult-entry-type').prop('checked',false);
       $('#consult-entry-type').change();
-      $('#consult-entry-type').prop('disabled','disabled');
+      $('#consult-entry-type').attr('disabled','disabled');
     }
     getDataRecord('/api/devices',function(devices){
       //$("#consult_product").html('');
       $("#consult-entry-device").empty();
       $('#consult-entry-device').append(new Option('Select Device', 0, true, true));
+      $('#consult-entry-device > option').attr('disabled','disabled');
       devices.sort((a, b) => (a["device_name"] > b["device_name"]) ? 1 : -1)
       devices.forEach(data => {
         //console.log(data);
@@ -236,6 +241,17 @@ $(function() {
 
   $('#rma-new').on('click',function() {
     $('#rma-entry').css('display','block');
+    getDataRecord('/api/devices',function(devices){
+      //$("#consult_product").html('');
+      $("#rma-entry-device").empty();
+      $('#rma-entry-device').append(new Option('Select Device', 0, true, true));
+      $('#rma-entry-device > option').attr('disabled','disabled');
+      devices.sort((a, b) => (a["device_name"] > b["device_name"]) ? 1 : -1)
+      devices.forEach(data => {
+        //console.log(data);
+        $("#rma-entry-device").append(new Option(data.device_name + "    (" + data.device_model + ")", data.device_model));
+      });     
+    },'');
   })
 
   $('#consult-close').on('click',function() {
@@ -244,6 +260,16 @@ $(function() {
 
   $('#rma-close').on('click',function() {
     $('#rma-entry').css('display','none');
+  })
+  
+  $('#error-close').on('click',function() {
+    $('#error-prompt').css('display','none');
+    $('.error-prompt-message').html('');
+  })
+  
+  $('.error-prompt-ok').on('click',function() {
+    $('#error-prompt').css('display','none');
+    $('.error-prompt-message').html('');
   })
 //  newTeam('15124','Fearless Falcons');
 //  addTeamOnline(193200,'SAMSON, JOVANNY');
@@ -289,10 +315,10 @@ function getElapsed(starttime){
   //console.log(starttime);
   var start=new Date(starttime.substr(0,4),parseInt(starttime.substr(5,2))-1,starttime.substr(8,2),starttime.substr(11,2),starttime.substr(14,2),starttime.substr(17,2),0);
   elapsed=nowDate-start;
-  const seconds = Math.floor((elapsed/1000)%60);
-  const minutes = Math.floor((elapsed/1000/60)%60);
-  const hours = Math.floor((elapsed/(1000*60*60))%24);
-  const days = Math.floor(elapsed/(1000*60*60*24));
+  const seconds = (Math.floor((elapsed/1000)%60))>0?(Math.floor((elapsed/1000)%60)):0;
+  const minutes = (Math.floor((elapsed/1000/60)%60))>0?(Math.floor((elapsed/1000/60)%60)):0;
+  const hours = (Math.floor((elapsed/(1000*60*60))%24)>0)?(Math.floor((elapsed/(1000*60*60))%24)):0;
+  const days = (Math.floor(elapsed/(1000*60*60*24)))>0?(Math.floor(elapsed/(1000*60*60*24))):0;
   
   return {
     hours,
@@ -302,7 +328,8 @@ function getElapsed(starttime){
 }
 
 function newConsult(consultData,reconnect){
-  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  console.log(consultData);
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   clickOrder.push(consultData.room);
   $('.consult-link-template').clone().attr('class','consult-link').attr('id',consultData.room+'-link').addClass('side-link').append('<b>'+consultData.type.toUpperCase()+' Consult</b><br>Case Number: '+consultData.casenum+'<br>Room: '+consultData.room+'<br>'+(consultData.consultee.ces==userCES?consultData.consultant.name:consultData.consultee.name)).appendTo('.sidebar');
   $('.subcontainer').css('z-index','19');
@@ -331,9 +358,17 @@ function newConsult(consultData,reconnect){
     $('.'+randomClass+'>.log-screen #consult_durationreason').attr('id','consult_durationreason-'+randomClass);
     $('.'+randomClass+'>.log-screen #consult_opportunity1').attr('id','consult_opportunity1-'+randomClass);
     $('.'+randomClass+'>.log-screen #consult_opportunity2').attr('id','consult_opportunity2-'+randomClass);
+    $('.'+randomClass+'>.log-screen #consult_summary').attr('id','consult_summary-'+randomClass).html(consultData.summary);
     $('.'+randomClass+'>.log-screen [name=consult_callhandler]').prop('name','consult_callhandler-'+randomClass);
     $('.'+randomClass+'>.log-screen #consult_callhandler_na').attr('id','consult_callhandler_na-'+randomClass).prop('checked',true);
+    if(consultData.type=='rma'){
+      $('.'+randomClass+'>.log-screen .rmaserialnumber').removeClass('hiddenDiv');
+      $('.'+randomClass+'>.log-screen #consult_serial').prop('id','consult_serial-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_serial-'+randomClass).val(consultData.serialnumber);
+    }
   }
+  
+  
   
   $('.'+randomClass+'>.consult-bar>.consult-input').attr('id',consultData.room).on('keyup',function(e){
     if (e.key === 'Enter' || e.keyCode === 13) {
@@ -355,6 +390,7 @@ function newConsult(consultData,reconnect){
   $('.side-link').removeClass('active');
   $('#'+consultData.room+'-link').addClass('active');
   $('#'+consultData.room+'-link').click(function(){
+    $('#'+consultData.room+'-link').removeClass('new-message');
     clickOrder.splice(clickOrder.indexOf(consultData.room),1);
     clickOrder.push(consultData.room);
     $('.subcontainer').css('z-index','19');
@@ -369,7 +405,7 @@ function newConsult(consultData,reconnect){
 
 function newChat(room,CES,expert){
   console.log('newchat');
-  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   clickOrder.push(room);
   $('.chat-link-template').clone().attr('class','chat-link').attr('id',room+'-link').addClass('side-link').append('<b>Chat</b><br>'+expert).appendTo('.sidebar');
   $('.subcontainer').css('z-index','19')
@@ -406,7 +442,7 @@ function newChat(room,CES,expert){
 }
 
 function newTeam(room,team){
-  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   clickOrder.push(room);
   $('.team-link-template').clone().attr('class','chat-link').attr('id',room+'-link').addClass('side-link').append('<b>Team Chat</b><br>'+team).appendTo('.sidebar');
   $('.subcontainer').css('z-index','19')
@@ -521,7 +557,7 @@ function sendMessage(room,name,message){
 var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
   
 var nowTime=(((nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())<10)?('0'+(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())):(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours()))+":"+((nowDate.getMinutes()<10)?('0'+nowDate.getMinutes()):(nowDate.getMinutes()))+":"+((nowDate.getSeconds()<10)?('0'+nowDate.getSeconds()):(nowDate.getSeconds()))+(nowDate.getHours()>12?" PM":" AM");
-var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
 var messageData={
   room:room,
   name:name,
@@ -530,13 +566,13 @@ var messageData={
   msgClass:randomClass,
 }
   socket.emit('consult message',messageData);
-  $('.message-template').clone().attr('class','message-source').addClass(randomClass).addClass(room+'-message').appendTo('#'+room+'-window');
+  /*$('.message-template').clone().attr('class','message-source').addClass(randomClass).addClass(room+'-message').appendTo('#'+room+'-window');
   $('.'+randomClass+'>.message-name').html(name).addClass('hiddenDiv');
   $('.'+randomClass+'>.message').html(messageData.message);
   //$('.'+randomClass+'>.message-info>.message-status').html('Delivered');
   $('.'+randomClass+'>.message-info>.message-time').html(nowTime);
   $('.'+randomClass+'>.message-info').css('min-width',parseInt($('.'+randomClass+'>.message').css('width'))+parseInt($('.'+randomClass+'>.message').css('padding-left'))+parseInt($('.'+randomClass+'>.message').css('padding-right')));
-  $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));
+  $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));*/
 }
 
 function setPinMessage(message){
@@ -544,6 +580,7 @@ function setPinMessage(message){
 }
 
 function displayMessage(msgClass,room,name,message,flag,timestamp){
+  console.log(flag);
   console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
   var nowDate=new Date((timestamp).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
   var nowTime=(((nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())<10)?('0'+(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())):(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours()))+":"+((nowDate.getMinutes()<10)?('0'+nowDate.getMinutes()):(nowDate.getMinutes()))+":"+((nowDate.getSeconds()<10)?('0'+nowDate.getSeconds()):(nowDate.getSeconds()))+(nowDate.getHours()>12?" PM":" AM");
@@ -565,18 +602,21 @@ function displayMessage(msgClass,room,name,message,flag,timestamp){
       $('.'+msgClass+'>.message-info').css('min-width',parseInt($('.'+msgClass+'>.message').css('width'))+parseInt($('.'+msgClass+'>.message').css('padding-left'))+parseInt($('.'+msgClass+'>.message').css('padding-right')));
       $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));
   }
+  if(!$('#'+room+'-link').hasClass('active')){
+    $('#'+room+'-link').addClass('new-message');
+  }
   
   
 }
 
 function addWaiting(data){
-  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   var lobIcon='';
   console.log(data);
   $('.waiting-list-item-template').clone().attr('class','waiting-list-item').attr('id',data.casenum).addClass(randomClass).appendTo('.'+data.type.toLowerCase()+'-dashboard>.waiting-list');
   $('.'+randomClass+'>.waiting-list-item-lob').addClass('lob-'+data.lob.substr(0,2));
   if(data.ces==userCES){
-    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+data.type.toLowerCase()+'","'+data.casenum+'",$("#'+randomClass+'.duration").text()'+',true)><span class="fa fa-fw fa-times-circle"></span></a>'+data.name);
+    $('.'+randomClass+'>.waiting-list-item-name').html('<a href=# onclick=cancelConsult("'+data.type.toLowerCase()+'","'+data.casenum+'",$("#'+randomClass+'.duration").text()'+','+data.ces+',true)><span class="fa fa-fw fa-times-circle"></span></a>'+data.name);
   }else{
     $('.'+randomClass+'>.waiting-list-item-name').html(data.name);
   }
@@ -588,7 +628,7 @@ function addWaiting(data){
   switch(userLOB.split(" ")[0]+" "+userlevel){
     case "TM 1":
     case "TM 2":
-    case "L2 2":if((data.type=='L2')&&(data.ces!=userCES)){
+    case "L2 2":if(((data.type=='L2')||(data.type=='RMA'))&&(data.ces!=userCES)){
       $('.queue-button').addClass('newQueue');
       showNotification(data.type.toUpperCase()+' consult waiting','From:'+data.name+'\nReason:'+data.reason)
     };
@@ -602,7 +642,7 @@ function addWaiting(data){
 }
 
 function addOngoing(data){
-var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
 var nowDate=new Date;
 var lobIcon='';
   console.log(data);
@@ -617,7 +657,7 @@ var lobIcon='';
 }
 
 function addAvailable(data){
-  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   var gentype;
   var lobIcon='';
   console.log(data);
@@ -641,7 +681,7 @@ function addAvailable(data){
 
 function addOnline(type,subtype,CES,name,lob){
   $('#'+CES+'.online-list-item').remove();
-  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   var gentype;
   var lobIcon='';
   console.log(type);
@@ -716,7 +756,7 @@ function showLobby(){
 }
 
 function popupChat(event,CES,name){
-  var randomClass=Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   console.log("popping");
   console.log(event.pageX);
   console.log(event.pageY);
@@ -737,18 +777,109 @@ function clearConsultForm(){
   $('#consult-entry-summary').val('');
   $('#consult-entry-reason').val('0');
   $('#consult-entry-device').val('0');
-  $('#consult-entry-device').val('0');
   $('#consult-entry-type').prop('checked',false);
 }
 
+function clearRMAForm(){
+  $('#rma-entry-casenumber').val('');
+  $('#rma-entry-summary').val('');
+  $('#rma-entry-serialnumber').val('');
+  $('#rma-entry-device').val('0');
+  $('#rma-entry-address').prop('checked',false);
+  $('#rma-entry-phone').prop('checked',false);
+  $('#rma-entry-pop').prop('checked',false);
+  $('#rma-entry-warranty').prop('checked',false);
+}
+
+function requestRMA(){
+  clearInterval(m);
+  $('#rma-entry-error').addClass('hiddenDiv');
+  var error='';
+  if(($('#rma-entry-casenumber').val().trim()=='')||
+     ($('#rma-entry-casenumber').val().trim().length<8)||
+     ($('#rma-entry-summary').val().trim()=='')||
+     (!$('#rma-entry-warranty').prop('checked'))||
+     ($('#rma-entry-serialnumber').val().trim()=='')||
+     ($('#rma-entry-serialnumber').val().trim().length<13)||
+     (!$('#rma-entry-address').prop('checked'))||
+     (!$('#rma-entry-phone').prop('checked'))||
+     (!$('#rma-entry-pop').prop('checked'))||
+     ($('#rma-entry-device').val()==null)||
+     ($('#rma-entry-device').val()=="0")){
+    if(!$('#rma-entry-warranty').prop('checked')){
+      error+='RMA cannot be initiated for out of warranty devices.<br>';
+    }
+    if(($('#rma-entry-casenumber').val().trim()=='')||($('#rma-entry-casenumber').val().trim().length<8)){
+      error+='Case Number must be 8 digits long.<br>';
+    }
+    if(($('#rma-entry-device').val()==null)||($('#rma-entry-device').val()=='0')){
+      error+='Select device to be replaced.<br>';
+    }
+    if(($('#rma-entry-serialnumber').val().trim()=='')||($('#rma-entry-serialnumber').val().trim().length<13)){
+      error+='Serial Number must be 13 characters long.<br>';
+    }    
+    if(!$('#rma-entry-address').prop('checked')){
+      error+='Make sure you have updated the customer\'s address.<br>';
+    }
+    if(!$('#rma-entry-phone').prop('checked')){
+      error+='Make sure you have updated the customer\'s phone number.<br>';
+    }
+    if(!$('#rma-entry-pop').prop('checked')){
+      error+='Make sure you have updated the device\'s place of purchase.<br>';
+    }
+    if($('#rma-entry-summary').val().trim()==''){
+      error+='Please enter summary of the case.<br>';
+    }
+    $('#rma-entry-error').html(error);
+    $('#rma-entry-error').removeClass('hiddenDiv');
+    var m=setInterval(function(){$('#rma-entry-error').addClass('hiddenDiv');clearInterval(m)},7000);
+  }else{
+    var data={
+      ces:userCES,
+      name:userCN,
+      type:'RMA',
+      casenum:$('#rma-entry-casenumber').val().trim(),
+      device:$('#rma-entry-device').val(),
+      serialnumber:$('#rma-entry-serialnumber').val().trim().toUpperCase(),
+      summary:$('#rma-entry-summary').val().trim(),
+      warranty:$('#rma-entry-warranty').prop('checked')?'OOW':'IW',
+      reason:'RMA Approval',
+      lob:userLOB,
+      usertype:usertype
+    }
+    socket.emit('consult request', data);
+    clearRMAForm();
+    $('#rma-entry').css('display','none');
+  }
+  console.log($('#rma-entry-summary').val());
+}
+
 function requestConsult(){
+  clearInterval(m);
+  $('#consult-entry-error').addClass('hiddenDiv');
+  var error='';
   if(($('#consult-entry-casenumber').val().trim()=='')||
      ($('#consult-entry-casenumber').val().trim().length<8)||
      ($('#consult-entry-summary').val().trim()=='')||
      ($('#consult-entry-reason').val()==null)||
-     ($('#consult-entry-device').val()==null)){
+     ($('#consult-entry-reason').val()=="0")||
+     ($('#consult-entry-device').val()==null)||
+     ($('#consult-entry-device').val()=="0")){
+    if(($('#consult-entry-casenumber').val().trim()=='')||($('#consult-entry-casenumber').val().trim().length<8)){
+      error+='Case Number must be 8 digits long.<br>';
+    }
+    if(($('#consult-entry-device').val()==null)||($('#consult-entry-device').val()=='0')){
+      error+='Select device for consult.<br>';
+    }
+    if(($('#consult-entry-reason').val()==null)||($('#consult-entry-reason').val()=='0')){
+      error+='Select reason for consult.<br>';
+    }
+    if($('#consult-entry-summary').val().trim()==''){
+      error+='Please enter summary of the case.<br>';
+    }
+    $('#consult-entry-error').html(error);
     $('#consult-entry-error').removeClass('hiddenDiv');
-    var m=setInterval(function(){$('#consult-entry-error').addClass('hiddenDiv');},5000);
+    var m=setInterval(function(){$('#consult-entry-error').addClass('hiddenDiv');clearInterval(m)},5000);
   }else{
     var data={
       ces:userCES,
@@ -779,12 +910,17 @@ function getConsult(type){
   socket.emit('get consult',data);
 }
 
-function cancelConsult(type,casenum,duration,abandon){
+function cancelConsult(type,casenum,duration,ces,abandon){
   var data={
     type:type.toLowerCase(),
     casenum:casenum,
     duration:duration,
-    abandon:abandon
+    abandon:abandon,
+    ces:ces,
+    reason:'Consultee Initiated'
+  }
+  if(data.abandon){
+    socket.emit('abandon consult',data)
   }
   console.log("cancel consult");
   socket.emit('cancel consult',data)

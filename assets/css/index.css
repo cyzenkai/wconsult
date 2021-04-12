@@ -52,7 +52,7 @@ body {
   top: 0; /* Stay at the top */
   left: 0;
   background-color: #fff;
-  border-right: 1px solid black;
+
 }
 
 @media screen and (max-width: 500px) {
@@ -63,7 +63,7 @@ body {
 }
 
 .consult-link{
-  border: 1px solid black;
+
   border-top:0px;
   border-right:0px;
   margin:auto;
@@ -75,6 +75,8 @@ body {
   white-space:normal;
   max-width:160px;
   background-color:#dbe9ff;
+  border-radius: 3px;
+  box-shadow: inset 2px 2px 3px 3px rgba(255,255,255,0.7),inset -2px -2px 4px 0px rgba(0,0,0,0.7);
 }
 
 .chat-link{
@@ -346,7 +348,7 @@ body {
   font-style:italic;
 }
 
-.message-options-transcript, .message-options-close, .message-options-setpin, .get-consult, .consult-entry-request, .consult-entry-clear{
+.message-options-transcript, .message-options-close, .message-options-setpin, .get-consult, .consult-entry-request, .consult-entry-clear, .rma-entry-request, .rma-entry-clear, .error-prompt-ok{
   display:inline-block;
   font-size:8pt;
   padding: 5px;
@@ -359,7 +361,7 @@ body {
   white-space:nowrap;
 }
 
-.message-options-close, .consult-entry-clear{
+.message-options-close, .consult-entry-clear, .rma-entry-clear{
   background-color: red;
 }
 
@@ -557,19 +559,19 @@ body {
 }
 
 .l2-dashboard, .voice-online{
-  background-color:#dbc486;
+  background-color:#379683;
 }
 
 .rma-dashboard, .nonvoice-online{
-  background-color:#8adeaf;
+  background-color:#5cdb95;
 }
 
 .cct-dashboard, .support-online{
-  background-color:#88a9db;
+  background-color:#8ee4af;
 }
 
 .ongoing-dashboard{
-  background-color:#dd8ede;
+  background-color:#edf5e1;
 }
 
 .log-screen{
@@ -585,7 +587,7 @@ body {
   padding-top:20px;
   padding-left:20px;
   padding-right:20px;
-  overflow-y: scroll;
+  overflow-y: auto;
   font-size:8pt;
 }
 
@@ -663,7 +665,7 @@ body {
   display:inline-block;
 }
 
-#consult-entry-summary{
+#consult-entry-summary, #rma-entry-summary{
   border-radius:5px;
   height:200px;
   width:400px;
@@ -764,12 +766,94 @@ input:checked + .slider:after
   content:'CCT';
 }
 
+.rma-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 16px;
+  vertical-align:bottom;
+}
+
+/* Hide default HTML checkbox */
+.rma-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.rma-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgb(1, 102, 6);
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.rma-slider:before {
+  position: absolute;
+  content: "";
+  height: 8px;
+  width: 8px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .rma-slider {
+  background-color: #2196F3;
+}
+
+input:focus + .rma-slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .rma-slider:before {
+  -webkit-transform: translateX(34px);
+  -ms-transform: translateX(34px);
+  transform: translateX(34px);
+}
+
+/* Rounded sliders */
+.rma-slider.round {
+  border-radius: 16px;
+}
+
+.rma-slider.round:before {
+  border-radius: 50%;
+}
+
+.rma-slider:after
+{
+ content:'OOW';
+ color: white;
+ display: block;
+ position: absolute;
+ transform: translate(-50%,-50%);
+ top: 50%;
+ left: 50%;
+ font-size: 10px;
+ font-family: Verdana, sans-serif;
+}
+
+input:checked + .rma-slider:after
+{  
+  content:'IW';
+}
+
 .fa-times-circle {
-  color:red;
+  color:#ffd6d6;
 }
 
 .active {
-  background-color: #b5e8ba;
+  background-color: #11ff00;
+  box-shadow: inset -3px -3px 3px 3px rgba(255,255,255,0.5),inset 2px 2px 3px 3px rgba(0,0,0,0.4);
 }
 
 .endedConsult{
@@ -789,6 +873,22 @@ input:checked + .slider:after
 		99%		{ background-color: #ffcbc7;color:white}
     100%    { background-color: #f58f87;color:black}
 }
+
+.new-message{
+    color: #fff;
+		padding: 10px;
+		display: inline-block;
+		animation: newMessage 5s infinite;
+}
+
+@keyframes newMessage{
+    0%    { background-color: #dbe9ff;color:black}
+    25%    { background-color: #267afc;color:white}
+		50%		{ background-color: #dbe9ff;color:black}
+    75%    { background-color: #267afc;color:white}
+    100%    { background-color: #dbe9ff;color:black}
+}
+
 
 .newQueue{
 		animation: blinkingQueue 5s infinite;
