@@ -13,6 +13,14 @@ html
         script(src='/assets/js/index.js')
     - try{var userCC = JSON.parse(userdetails).users_CC;var userCES = JSON.parse(userdetails).users_CES;var userLOB = JSON.parse(userdetails).users_LOB; var userLevel = JSON.parse(userdetails).users_type.substr(6,1);var userType = JSON.parse(userdetails).users_type=='RTA'?'RTA':JSON.parse(userdetails).users_type.substr(8);var userAlias = JSON.parse(userdetails).users_alias;}catch(error){loadEmergency()}
     body(onload="expertName=getCookie('expertname');")
+        audio#newConsultAudio.hiddenDiv(controls)
+            source(src="/assets/audio/newConsult.mp3" type="audio/mp3")
+        audio#consultTakenAudio.hiddenDiv(controls)
+            source(src="/assets/audio/consultTaken.mp3" type="audio/mp3")
+        audio#disconnectedAudio.hiddenDiv(controls)
+            source(src="/assets/audio/disconnected.mp3" type="audio/mp3")
+        audio#newMessageAudio.hiddenDiv(controls)
+            source(src="/assets/audio/newMessage.mp3" type="audio/mp3") 
         .container
             .sidebar-container
                 .sidebar

@@ -118,6 +118,7 @@ $(function() {
   
   socket.on('user disconnected from room',function(user){
     clearInterval(consultStatus);
+    $('#disconnectedAudio').trigger('play');
     $('#'+user.room+'-window .consult-status').text((user.consultant.ces==userCES?user.consultee.name:user.consultee.name)+" has disconnected. Waiting for reconnection.");
     consultStatus= 'reload window'
   });
@@ -341,6 +342,7 @@ function newConsult(consultData,reconnect){
     if(!reconnect){
       sendMessage(consultData.room,consultData.consultee.name,'Hi! Requesting assistance with case number '+consultData.casenum+' with device '+consultData.device+', please see summary of case:\n'+consultData.summary);
     }
+    $('#consultTakenAudio').trigger('play');
   }
   timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,consultData.consultstarted)},1000);
   if(consultData.consultant.ces==userCES){
@@ -604,6 +606,7 @@ function displayMessage(msgClass,room,name,message,flag,timestamp){
   }
   if(!$('#'+room+'-link').hasClass('active')){
     $('#'+room+'-link').addClass('new-message');
+    $('#newMessageAudio').trigger('play');
   }
   
   
@@ -630,12 +633,14 @@ function addWaiting(data){
     case "TM 2":
     case "L2 2":if(((data.type=='L2')||(data.type=='RMA'))&&(data.ces!=userCES)){
       $('.queue-button').addClass('newQueue');
-      showNotification(data.type.toUpperCase()+' consult waiting','From:'+data.name+'\nReason:'+data.reason)
+      showNotification(data.type.toUpperCase()+' consult waiting','From:'+data.name+'\nReason:'+data.reason);
+      $('#newConsultAudio').trigger('play');
     };
     break;
     case "CCT 1":if((data.type=='CCT')&&(data.ces!=userCES)){
       $('.queue-button').addClass('newQueue')
       showNotification(data.type.toUpperCase()+' consult waiting','From:'+data.name+'\nReason:'+data.reason)
+      $('#newConsultAudio').trigger('play');
     };
     break;
   }
