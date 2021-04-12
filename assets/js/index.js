@@ -610,12 +610,14 @@ function displayMessage(msgClass,room,name,message,flag,timestamp){
       // The tab has become visible so clear the now-stale Notification.
       try{
         $('#newMessageAudio').trigger('play');
+
       }catch(err){
         
       }
   }else if(!$('#'+room+'-link').hasClass('active')){
     $('#'+room+'-link').addClass('new-message');
     $('#newMessageAudio').trigger('play');
+
   }
   
   

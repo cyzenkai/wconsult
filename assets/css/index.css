@@ -10,11 +10,12 @@ body {
 .navbar {
   width: 100%;
   background-color: #555;
-  overflow: auto;
+  overflow: hidden
   z-index:20;
   position:fixed;
   top: 0; /* Stay at the top */
   left: 0;
+  white-space:nowrap;
 }
 
 .navbar a {
@@ -23,6 +24,7 @@ body {
   color: white;
   text-decoration: none;
   font-size: 17px;
+  white-space:nowrap;
 
 }
 
