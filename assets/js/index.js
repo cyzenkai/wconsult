@@ -126,6 +126,7 @@ $(function() {
   socket.on('user reconnected to room',function(user){
     clearInterval(consultStatus);
     $('#'+user.room+'-window .consult-status').text((user.consultant.ces==userCES?user.consultee.name:user.consultee.name)+" has reconnected.");
+    $('#reconnectedAudio').trigger('play');
     consultStatus= setInterval(function(){$('#'+user.room+'-window .consult-status').text('');},5000);
   });
 
@@ -604,7 +605,15 @@ function displayMessage(msgClass,room,name,message,flag,timestamp){
       $('.'+msgClass+'>.message-info').css('min-width',parseInt($('.'+msgClass+'>.message').css('width'))+parseInt($('.'+msgClass+'>.message').css('padding-left'))+parseInt($('.'+msgClass+'>.message').css('padding-right')));
       $('#'+room+'-window').scrollTop($('#'+room+'-window').prop("scrollHeight"));
   }
-  if(!$('#'+room+'-link').hasClass('active')){
+  if (document.visibilityState !== 'visible') {
+      console.log('invisible');
+      // The tab has become visible so clear the now-stale Notification.
+      try{
+        $('#newMessageAudio').trigger('play');
+      }catch(err){
+        
+      }
+  }else if(!$('#'+room+'-link').hasClass('active')){
     $('#'+room+'-link').addClass('new-message');
     $('#newMessageAudio').trigger('play');
   }

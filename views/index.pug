@@ -20,11 +20,14 @@ html
         audio#disconnectedAudio.hiddenDiv(controls)
             source(src="/assets/audio/disconnected.mp3" type="audio/mp3")
         audio#newMessageAudio.hiddenDiv(controls)
-            source(src="/assets/audio/newMessage.mp3" type="audio/mp3") 
+            source(src="/assets/audio/newMessage.mp3" type="audio/mp3")
+        audio#reconnectedAudio.hiddenDiv(controls)
+            source(src="/assets/audio/reconnected.mp3" type="audio/mp3") 
         .container
             .sidebar-container
                 .sidebar
             .navbar
+                a#modal_btn_comment(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
                 a#consult-new(href='#')
                     i.fa.fa-fw.fa-envelope
                     |  New Consult
