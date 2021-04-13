@@ -63,6 +63,13 @@ $(function() {
   
   socket.on('duplicate window',function(){
       $('#duplicate-window').css('display','block');
+      setTimeout(function(){
+        console.log(document.cookie);
+        document.cookie = 'token=;expires=;path=/';
+        document.cookie = 'refreshToken=;expires=;path=/';
+        document.cookie = 'userdetails=;expires=;path=/';
+        window.open('/','_self',true);
+      },5000);
   });
   
   socket.on('reload window',function(){
@@ -79,13 +86,13 @@ $(function() {
   });
 
   socket.on('user connect',function(data){
-    addOnline(data.type,data.lob,data.ces,data.name,data.type.substr(0,2));
+    addOnline(data.type,data.lob,data.ces,data.name,data.lob);
     addAvailable(data);
   });
 
   socket.on('user list',function(data){
     data.forEach(function(user){
-      addOnline(user.type,user.lob,user.ces,user.name,user.type.substr(0,2));
+      addOnline(user.type,user.lob,user.ces,user.name,user.lob);
       addAvailable(user);
     })
   });
@@ -100,9 +107,9 @@ $(function() {
     console.log("ongoing list");
     data.forEach(function(user){
       console.log(user);
-      if((user.consultee.ces!=userCES)&&(user.consultant.ces!=userCES)){
+      //if((user.consultee.ces!=userCES)&&(user.consultant.ces!=userCES)){
           addOngoing(user);  
-      }
+      //}
     })
   });
   
@@ -627,6 +634,7 @@ function addWaiting(data){
   var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   var lobIcon='';
   console.log(data);
+  if(!($('#'+data.casenum+'.waiting-list-item').length>0)){
   $('.waiting-list-item-template').clone().attr('class','waiting-list-item').attr('id',data.casenum).addClass(randomClass).appendTo('.'+data.type.toLowerCase()+'-dashboard>.waiting-list');
   $('.'+randomClass+'>.waiting-list-item-lob').addClass('lob-'+data.lob.substr(0,2));
   if(data.ces==userCES){
@@ -655,13 +663,15 @@ function addWaiting(data){
     };
     break;
   }
+  }
 }
 
 function addOngoing(data){
 var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
 var nowDate=new Date;
 var lobIcon='';
-  console.log(data);
+  console.log($('#'+data.room+'.ongoing-list.item').length);
+  if(!($('#'+data.room+'.ongoing-list-item').length>0)){
   $('.ongoing-list-item-template').clone().attr('class','ongoing-list-item').attr('id',data.room).addClass(randomClass).appendTo('.ongoing-dashboard>.ongoing-list');
   $('.'+randomClass+'>.ongoing-list-item-type').html(data.type.toUpperCase()+' Consult');
   $('.'+randomClass+'>.ongoing-list-item-room').html('Room: '+data.room);
@@ -670,6 +680,7 @@ var lobIcon='';
   $('.'+randomClass+'>.duration').attr('id',randomClass);
   console.log(data.consultstarted);
   timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,data.consultstarted)},1000);
+  }
 }
 
 function addAvailable(data){
@@ -678,11 +689,12 @@ function addAvailable(data){
   var lobIcon='';
   console.log(data);
   switch(data.lob+" "+data.type){
-    case 'CCT Voice':
+    case 'CCT CCT':
+      $('#'+data.ces+'.available-list-item').remove();
       $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',data.ces).addClass(randomClass).appendTo('.cct-dashboard>.available-list');
       break;
     case 'L2 Voice' :
-    case 'L1 TM':
+    case 'TM TM':
       $('#'+data.ces+'.available-list-item').remove();
       $('#'+data.ces+'.available-list-item').remove();
       $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',data.ces).addClass(randomClass).appendTo('.l2-dashboard>.available-list');
@@ -703,6 +715,8 @@ function addOnline(type,subtype,CES,name,lob){
   console.log(type);
   switch(type){
     case "Voice":gentype="voice";break;
+    case "CCT":gentype="voice";break;
+    case "OS":gentype="voice";break;
     case "Chat":gentype="nonvoice";break;
     case "OTS":gentype="nonvoice";break;
     case "SME":gentype="support";break;
