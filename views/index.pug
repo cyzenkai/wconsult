@@ -24,6 +24,8 @@ html
             source(src="/assets/audio/newMessage.mp3" type="audio/mp3")
         audio#reconnectedAudio.hiddenDiv(controls)
             source(src="/assets/audio/reconnected.mp3" type="audio/mp3") 
+        audio#notificationAudio.hiddenDiv(controls)
+            source(src="/assets/audio/dehngdohng.mp3" type="audio/mp3") 
         .container
             .sidebar-container
                 .sidebar
@@ -105,6 +107,24 @@ html
                     #L1SME.online-list
         .chat-popup
             | Initiate Chat
+        .rta-chat-popup
+            span#expert
+            br
+            #ces.hiddenDiv
+            #longHold.rta-callout
+                | Long Hold
+            #longCall.rta-callout
+                | Long Call
+            #clearOutbound.rta-callout
+                | Clear Outbound
+            #clearTraining.rta-callout
+                | Clear Training
+            #overBreak.rta-callout
+                | Over Break
+            #invalidAux.rta-callout
+                | Unscheduled Aux
+        .command-chat-popup
+            | Initiate Chat
         .command-popup
             .holdConsult
                 | Hold Consults
@@ -114,6 +134,8 @@ html
                 | Reload Windows
             .logoutAll
                 | Logout All
+        .notification-container
+            
         #consult-entry.modal
             .modal-content
                 span#consult-close.close &times;
@@ -353,6 +375,10 @@ html
                         i.fa.fa-fw.fa-send-o
                     textarea.team-input(rows='5')
             .team-link-template
+            .notification-item-template
+                .notification-source
+                .notification-message        
+                .notification-acknowledge.button-link Acknowledge
             .message-template
                 .message-name
                 .message
