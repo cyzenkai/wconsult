@@ -1347,12 +1347,53 @@ io.on('connection', function(socket){
     socket.on('logout all',function(){
         socket.broadcast.emit('force logout');
     })
+  
+    socket.on('longHold',function(ces){
+        console.log('received long hold '+ces);
+        var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+        console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('long hold',randomClass);
+        saveCallout(ces,'Long Hold',randomClass);
+    })
+  
+    socket.on('longCall',function(ces){
+        var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('long call',randomClass);
+        saveCallout(ces,'Long Call',randomClass);
+    })
+  
+    socket.on('clearOutbound',function(ces){
+        var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('clear outbound',randomClass);
+        saveCallout(ces,'Clear Outbound',randomClass);
+    })
+  
+    socket.on('clearTraining',function(ces){
+        var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('clear training',randomClass);
+        saveCallout(ces,'Clear Training',randomClass);
+    })
+  
+    socket.on('overBreak',function(ces){
+        var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('over break',randomClass);
+        saveCallout(ces,'Overbreak',randomClass);
+    })
+  
+    socket.on('invalidAux',function(ces){
+        var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('invalid aux',randomClass);
+        saveCallout(ces,'Unscheduled Aux',randomClass);
+    })
         
 
 
   
 });
-  
+  function saveCallout(ces,callout){
+    
+  }
+
   function abandonConsult(abandonData){
       var errors=[];
       var data = {
