@@ -209,6 +209,31 @@ $(function() {
     //window.location.reload(true);
     $('a#logout').click();
   })
+  
+  socket.on('long hold',function(randomClass){
+      console.log("received long hold "+randomClass);
+      rtaCallout('Long Hold',randomClass);
+  })
+  
+  socket.on('long call',function(randomClass){
+      rtaCallout('Long Call',randomClass);
+  })
+  
+  socket.on('clear outbound',function(randomClass){
+      rtaCallout('Clear Outbound',randomClass);
+  })
+  
+  socket.on('clear training',function(randomClass){
+      rtaCallout('Clear Training',randomClass);
+  })
+  
+  socket.on('over break',function(randomClass){
+      rtaCallout('Overbreak',randomClass);
+  })
+  
+  socket.on('invalid aux',function(randomClass){
+      rtaCallout('Unscheduled Break',randomClass);
+  })
 
 
   $(window).on("click", function(event) {
@@ -221,6 +246,7 @@ $(function() {
        event.target.classList.contains('center-online-item'))){
       $('.chat-popup').css('display','none');
       $('.command-popup').css('display','none');
+      $('.rta-chat-popup').css('display','none');
       toggleTeamOnline('off');
     }
   });
@@ -862,9 +888,13 @@ function addOnline(type,subtype,CES,name,lob,center){
       }catch(err){
         
       }
-      $('#'+CES+'.center-online-item').on('click',function(event){
-        //popupChat(event,CES,name);
-      })
+      console.log(userLOB);
+      if(userLOB=='RTA ARLO'){
+          $('#'+CES+'.center-online-item').on('click',function(event){
+              popupRTA(event,CES,name);
+              console.log('popping');
+          })
+      }
       
   }
   /*if(CES!=userCES){
@@ -872,6 +902,29 @@ function addOnline(type,subtype,CES,name,lob,center){
       popupChat(event,CES,name);
     });
   }*/
+}
+
+function popupRTA(event,CES,name){
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+  $(".rta-chat-popup>#expert").html(name);
+  $(".rta-chat-popup>#ces").html(CES);
+  $(".rta-chat-popup").unbind('click');
+  $('.rta-chat-popup').css('left',event.pageX);      // <<< use pageX and pageY
+  $('.rta-chat-popup').css('top',event.pageY);
+  $('.rta-chat-popup').css('display','inline');     
+  $(".rta-chat-popup").css("position", "absolute");
+  $('.rta-callout').toArray().forEach(function(callout){
+      $(callout).on('click',function(){
+          console.log('sending '+$(callout).attr('id'));
+          socket.emit($(callout).attr('id'),CES);
+          $('.rta-callout').toArray().forEach(function(callout){
+              $(callout).unbind('click');
+          })
+      })                  
+  })
+  /*$(".rta-chat-popup").on('click',function(){
+    $('.rta-chat-popup').css('display','none');
+  });*/
 }
 
 function sortList(className){
@@ -1240,4 +1293,15 @@ function showError(message,withClose){
 
 function hideError(){
   $('#error-prompt').css('display','none'); 
+}
+
+function rtaCallout(message,randomClass){
+    $('.notification-item-template').clone().attr('class','notification-item').attr('id',randomClass).appendTo('.notification-container');
+    $('#'+randomClass+'.notification-item>.notification-source').html("RTA");
+    $('#'+randomClass+'.notification-item>.notification-message').html(message);
+    $('#'+randomClass+'.notification-item>.notification-acknowledge').on('click',function(){
+        $('#'+randomClass+'.notification-item').hide('slow',function(){$('#'+randomClass+'.notification-item').remove()});
+    })
+    $('#notificationAudio').trigger('play');
+  
 }
