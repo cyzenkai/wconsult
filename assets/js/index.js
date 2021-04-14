@@ -17,6 +17,7 @@ try{
   var userCES=user.users_CES;
   var userLOB=user.users_LOB;
   var userCC=user.users_CC;
+  var userCenter=user.users_center;
 }catch(err){
 }
 
@@ -40,8 +41,11 @@ $(function() {
       }catch(err){
         
       }
-    }
-  });
+  }
+  
+  
+  
+});
   
   
   console.log(userLOB.split(" ")[0]+" "+userlevel);
@@ -72,12 +76,15 @@ $(function() {
       },5000);
   });
   
-  socket.on('reload window',function(){
+  socket.on('reload window',function(seconds){
     console.log('reload');
     //window.location.reload(true);
-    location.reload(true);
+    showError('Reloading window in '+seconds+' seconds.',false);
+    setTimeout(function(){
+      location.reload(true);
+    },seconds*1000);
   });
-
+  
   socket.on('consult waiting', function(data){
     //addWaiting(type,CES,name,lob)
     console.log("add waiting");
@@ -86,13 +93,13 @@ $(function() {
   });
 
   socket.on('user connect',function(data){
-    addOnline(data.type,data.lob,data.ces,data.name,data.lob);
+    addOnline(data.type,data.lob,data.ces,data.name,data.lob,data.center);
     addAvailable(data);
   });
 
   socket.on('user list',function(data){
     data.forEach(function(user){
-      addOnline(user.type,user.lob,user.ces,user.name,user.lob);
+      addOnline(user.type,user.lob,user.ces,user.name,user.lob,user.center);
       addAvailable(user);
     })
   });
@@ -120,7 +127,7 @@ $(function() {
   socket.on('user disconnect',function(data){
     console.log(data)
     $('.online-list-item#'+data).remove();
-    
+    $('#'+data+'.center-online-item').remove();
   });
   
   socket.on('user disconnected from room',function(user){
@@ -163,6 +170,11 @@ $(function() {
     }
   })
   
+  socket.on('join center',function(center,reconnect){
+    console.log("joining room");
+    socket.emit('join room',center);
+  })
+  
   socket.on('consult message',function(messageData){
     console.log("message received");
     console.log(messageData);
@@ -177,8 +189,25 @@ $(function() {
   
   socket.on('reject consult',function(message){
     console.log('rejecting');
-    $('.error-prompt-message').html(message);
-    $('#error-prompt').css('display','block');
+    showError(message);
+  })
+  
+  socket.on('hold consult',function(){
+    console.log('hold');
+    //window.location.reload(true);
+    showError('Consult is on hold. Server is updating.',false);
+  })
+  
+  socket.on('unhold consult',function(){
+    console.log('unhold');
+    //window.location.reload(true);
+    hideError();
+  })
+  
+  socket.on('force logout',function(){
+    console.log('logout');
+    //window.location.reload(true);
+    $('a#logout').click();
   })
 
 
@@ -187,12 +216,17 @@ $(function() {
     if(!(event.target.parentElement.classList.contains('online-list-item')||
        event.target.classList.contains('chat-popup')||
        event.target.classList.contains('message-options-online')||
-       event.target.classList.contains('team-online-arrow'))){
+       event.target.classList.contains('team-online-arrow')||
+       event.target.classList.contains('command-button')||
+       event.target.classList.contains('center-online-item'))){
       $('.chat-popup').css('display','none');
+      $('.command-popup').css('display','none');
       toggleTeamOnline('off');
     }
   });
-
+  
+  newCenterChat(userCenter.toLowerCase());
+  
   $('#consult-entry-type').on('change',function() {
     if($('#consult-entry-type').prop('checked')){
       $('#consult-entry-reason').html('');
@@ -280,6 +314,50 @@ $(function() {
     $('#error-prompt').css('display','none');
     $('.error-prompt-message').html('');
   })
+  
+  $('.queue-button').on('click',function(){
+    //$('.subcontainer').css('z-index','19');
+    $('.side-link').removeClass('active');
+    $('.queue-button').addClass('active');
+    showQueue();
+  })
+  
+  $('.lobby-button').on('click',function(){
+    //$('.subcontainer').css('z-index','19');
+    $('.side-link').removeClass('active');
+    $('.lobby-button').addClass('active');
+    showLobby();
+  })
+  
+  $('.holdConsult').on('click',function(){
+    socket.emit('hold consult');
+    $('.command-popup').css('display','none');
+  })
+  
+  $('.unholdConsult').on('click',function(){
+    socket.emit('unhold consult');
+    $('.command-popup').css('display','none');
+  })
+  
+  $('.reloadWindows').on('click',function(){
+    socket.emit('reload windows',10);
+    $('.command-popup').css('display','none');
+  })
+  
+  $('.logoutAll').on('click',function(){
+    socket.emit('logout all');
+    $('.command-popup').css('display','none');
+  })
+  
+  $('.command-button').on('click',function(){
+    popupCommand();
+  })
+  
+  $('#logout').on('click',function(){
+    socket.emit('logout',userCES)
+  })
+  
+ 
 //  newTeam('15124','Fearless Falcons');
 //  addTeamOnline(193200,'SAMSON, JOVANNY');
 
@@ -336,81 +414,118 @@ function getElapsed(starttime){
   };
 }
 
+function newCenterChat(center){
+  if(!($('#'+center+'-link').length>0)){
+    clickOrder.push(center);
+    $('.center-link-template').clone().attr('class','center-link').attr('id',center+'-link').addClass('side-link').append('<b>'+center.toUpperCase()+' Chat</b>').appendTo('.sidebar');
+    $('.subcontainer').css('z-index','19');
+    $('.center-container-template').clone().attr('class','center-container').attr('id',center+'-window').addClass(center).addClass('subcontainer').appendTo('.container');
+
+    $('.'+center+'>.center-bar>.center-input').attr('id',center).on('keyup',function(e){
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        $('.'+center+'>.center-bar>.center-send-button').click();
+      }
+    });
+    $('.'+center+'>.center-bar>.center-send-button').click(function(){
+      if($('#'+center+'.center-input').val().trim()!==""){
+        sendMessage(center,userCN,$('#'+center+'.center-input').val().trim());
+      }
+      $('#'+center+'.center-input').val('').focus();
+    });
+    $('.side-link').removeClass('active');
+    $('#'+center+'-link').addClass('active');
+    $('#'+center+'-link').click(function(){
+      $('#'+center+'-link').removeClass('new-message');
+      clickOrder.splice(clickOrder.indexOf(center),1);
+      clickOrder.push(center);
+      $('.subcontainer').css('z-index','19');
+      $('.side-link').removeClass('active');
+      $('#'+center+'-link').addClass('active');
+      $('#'+center+'-window').css('z-index','20');
+      $('.center-input#'+center).val('').focus();
+      console.log(clickOrder);
+    });
+    $('.center-input#'+center).val('').focus();
+  }
+}
+
 function newConsult(consultData,reconnect){
   console.log(consultData);
-  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
-  clickOrder.push(consultData.room);
-  $('.consult-link-template').clone().attr('class','consult-link').attr('id',consultData.room+'-link').addClass('side-link').append('<b>'+consultData.type.toUpperCase()+' Consult</b><br>Case Number: '+consultData.casenum+'<br>Room: '+consultData.room+'<br>'+(consultData.consultee.ces==userCES?consultData.consultant.name:consultData.consultee.name)).appendTo('.sidebar');
-  $('.subcontainer').css('z-index','19');
-  $('.consult-container-template').clone().attr('class','consult-container').attr('id',consultData.room+'-window').addClass(randomClass).addClass('subcontainer').appendTo('.container');
-  if(consultData.consultee.ces==userCES){
-    $('.'+randomClass+'>.log-screen').remove();
-    $('.'+randomClass).css('width','calc(100% - 200px)');
-    $('.'+randomClass).css('margin-left','161px');
-    if(!reconnect){
-      sendMessage(consultData.room,consultData.consultee.name,'Hi! Requesting assistance with case number '+consultData.casenum+' with device '+consultData.device+', please see summary of case:\n'+consultData.summary);
-    }
-    $('#consultTakenAudio').trigger('play');
-  }
-  timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,consultData.consultstarted)},1000);
-  if(consultData.consultant.ces==userCES){
-    $('.'+randomClass+'>.log-screen #consult_casenumber').val(consultData.casenum);
-    $('.'+randomClass+'>.log-screen #L2_list_consult').val(consultData.consultant.name);
-    $('.'+randomClass+'>.log-screen #L1_list_consult_source').val(consultData.consultee.name);
-    $('.'+randomClass+'>.log-screen #consult_invalidreason').val(consultData.reason);
-    $('.'+randomClass+'>.log-screen #consult_product').val(consultData.device);
-    $('.'+randomClass+'>.log-screen #consult_casenumber').attr('id','consult_casenumber-'+randomClass);
-    $('.'+randomClass+'>.log-screen #L2_list_consult').attr('id','L2_list_consult-'+randomClass);
-    $('.'+randomClass+'>.log-screen #L1_list_consult_source').attr('id','L1_list_consult_source-'+randomClass);
-    $('.'+randomClass+'>.log-screen #consult_invalidreason').attr('id','consult_invalidreason-'+randomClass);
-    $('.'+randomClass+'>.log-screen #consult_product').attr('id','consult_product-'+randomClass);
-    $('.'+randomClass+'>.log-screen #consult_duation').attr('id','consult_duration-'+randomClass);
-    $('.'+randomClass+'>.log-screen #consult_durationreason').attr('id','consult_durationreason-'+randomClass);
-    $('.'+randomClass+'>.log-screen #consult_opportunity1').attr('id','consult_opportunity1-'+randomClass);
-    $('.'+randomClass+'>.log-screen #consult_opportunity2').attr('id','consult_opportunity2-'+randomClass);
-    $('.'+randomClass+'>.log-screen #consult_summary').attr('id','consult_summary-'+randomClass).html(consultData.summary);
-    $('.'+randomClass+'>.log-screen [name=consult_callhandler]').prop('name','consult_callhandler-'+randomClass);
-    $('.'+randomClass+'>.log-screen #consult_callhandler_na').attr('id','consult_callhandler_na-'+randomClass).prop('checked',true);
-    if(consultData.type=='rma'){
-      $('.'+randomClass+'>.log-screen .rmaserialnumber').removeClass('hiddenDiv');
-      $('.'+randomClass+'>.log-screen #consult_serial').prop('id','consult_serial-'+randomClass);
-      $('.'+randomClass+'>.log-screen #consult_serial-'+randomClass).val(consultData.serialnumber);
-    }
-  }
-  
-  
-  
-  $('.'+randomClass+'>.consult-bar>.consult-input').attr('id',consultData.room).on('keyup',function(e){
-    if (e.key === 'Enter' || e.keyCode === 13) {
-      $('.'+randomClass+'>.consult-bar>.consult-send-button').click();
-    }
-  });
-  $('.'+randomClass+'>.consult-bar>.consult-send-button').click(function(){
-    if($('#'+consultData.room+'.consult-input').val().trim()!==""){
-      sendMessage(consultData.room,(consultData.consultee.ces==userCES?consultData.consultee.name:consultData.consultant.name),$('#'+consultData.room+'.consult-input').val().trim());
-    }
-    $('#'+consultData.room+'.consult-input').val('').focus();
-  });
-  $('.'+randomClass+'>.message-options>.message-options-transcript').click(function(){
-    showTranscript(getTranscript(consultData));
-  });
-  $('.'+randomClass+'>.message-options>.message-options-close').click(function(){
-    closeConsult(consultData);
-  });
-  $('.side-link').removeClass('active');
-  $('#'+consultData.room+'-link').addClass('active');
-  $('#'+consultData.room+'-link').click(function(){
-    $('#'+consultData.room+'-link').removeClass('new-message');
-    clickOrder.splice(clickOrder.indexOf(consultData.room),1);
+  if(!($('#'+consultData.room+'-link').length>0)){
+    var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
     clickOrder.push(consultData.room);
+    $('.consult-link-template').clone().attr('class','consult-link').attr('id',consultData.room+'-link').addClass('side-link').append('<b>'+consultData.type.toUpperCase()+' Consult</b><br>Case Number: '+consultData.casenum+'<br>Room: '+consultData.room+'<br>'+(consultData.consultee.ces==userCES?consultData.consultant.name:consultData.consultee.name)).appendTo('.sidebar');
     $('.subcontainer').css('z-index','19');
+    $('.consult-container-template').clone().attr('class','consult-container').attr('id',consultData.room+'-window').addClass(randomClass).addClass('subcontainer').appendTo('.container');
+    if(consultData.consultee.ces==userCES){
+      $('.'+randomClass+'>.log-screen').remove();
+      $('.'+randomClass).css('width','calc(100% - 200px)');
+      $('.'+randomClass).css('margin-left','161px');
+      if(!reconnect){
+        sendMessage(consultData.room,consultData.consultee.name,'Hi! Requesting assistance with case number '+consultData.casenum+' with device '+consultData.device+', please see summary of case:\n'+consultData.summary);
+      }
+      $('#consultTakenAudio').trigger('play');
+    }
+    timeinterval[randomClass]= setInterval(function(){updateTimer(randomClass,consultData.consultstarted)},1000);
+    if(consultData.consultant.ces==userCES){
+      $('.'+randomClass+'>.log-screen #consult_casenumber').val(consultData.casenum);
+      $('.'+randomClass+'>.log-screen #L2_list_consult').val(consultData.consultant.name);
+      $('.'+randomClass+'>.log-screen #L1_list_consult_source').val(consultData.consultee.name);
+      $('.'+randomClass+'>.log-screen #consult_invalidreason').val(consultData.reason);
+      $('.'+randomClass+'>.log-screen #consult_product').val(consultData.device);
+      $('.'+randomClass+'>.log-screen #consult_casenumber').attr('id','consult_casenumber-'+randomClass);
+      $('.'+randomClass+'>.log-screen #L2_list_consult').attr('id','L2_list_consult-'+randomClass);
+      $('.'+randomClass+'>.log-screen #L1_list_consult_source').attr('id','L1_list_consult_source-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_invalidreason').attr('id','consult_invalidreason-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_product').attr('id','consult_product-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_duation').attr('id','consult_duration-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_durationreason').attr('id','consult_durationreason-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_opportunity1').attr('id','consult_opportunity1-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_opportunity2').attr('id','consult_opportunity2-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_summary').attr('id','consult_summary-'+randomClass).html(consultData.summary);
+      $('.'+randomClass+'>.log-screen [name=consult_callhandler]').prop('name','consult_callhandler-'+randomClass);
+      $('.'+randomClass+'>.log-screen #consult_callhandler_na').attr('id','consult_callhandler_na-'+randomClass).prop('checked',true);
+      if(consultData.type=='rma'){
+        $('.'+randomClass+'>.log-screen .rmaserialnumber').removeClass('hiddenDiv');
+        $('.'+randomClass+'>.log-screen #consult_serial').prop('id','consult_serial-'+randomClass);
+        $('.'+randomClass+'>.log-screen #consult_serial-'+randomClass).val(consultData.serialnumber);
+      }
+    }
+
+
+
+    $('.'+randomClass+'>.consult-bar>.consult-input').attr('id',consultData.room).on('keyup',function(e){
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        $('.'+randomClass+'>.consult-bar>.consult-send-button').click();
+      }
+    });
+    $('.'+randomClass+'>.consult-bar>.consult-send-button').click(function(){
+      if($('#'+consultData.room+'.consult-input').val().trim()!==""){
+        sendMessage(consultData.room,(consultData.consultee.ces==userCES?consultData.consultee.name:consultData.consultant.name),$('#'+consultData.room+'.consult-input').val().trim());
+      }
+      $('#'+consultData.room+'.consult-input').val('').focus();
+    });
+    $('.'+randomClass+'>.message-options>.message-options-transcript').click(function(){
+      showTranscript(getTranscript(consultData));
+    });
+    $('.'+randomClass+'>.message-options>.message-options-close').click(function(){
+      closeConsult(consultData);
+    });
     $('.side-link').removeClass('active');
     $('#'+consultData.room+'-link').addClass('active');
-    $('#'+consultData.room+'-window').css('z-index','20');
+    $('#'+consultData.room+'-link').click(function(){
+      $('#'+consultData.room+'-link').removeClass('new-message');
+      clickOrder.splice(clickOrder.indexOf(consultData.room),1);
+      clickOrder.push(consultData.room);
+      $('.subcontainer').css('z-index','19');
+      $('.side-link').removeClass('active');
+      $('#'+consultData.room+'-link').addClass('active');
+      $('#'+consultData.room+'-window').css('z-index','20');
+      $('.consult-input#'+consultData.room).val('').focus();
+      console.log(clickOrder);
+    });
     $('.consult-input#'+consultData.room).val('').focus();
-    console.log(clickOrder);
-  });
-  $('.consult-input#'+consultData.room).val('').focus();
+  }
 }
 
 function newChat(room,CES,expert){
@@ -503,12 +618,17 @@ function closeConsult(consultData){
     consultData.callhandler=$('#'+consultData.room+'-window input[name=consult_callhandler-'+randomClass+']:checked').val();
     consultData.opportunity1=$('#'+consultData.room+'-window #consult_opportunity1-'+randomClass).val();
     consultData.opportunity2=$('#'+consultData.room+'-window #consult_opportunity2-'+randomClass).val();
-    consultData.timestamp=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
     console.log("has log screen");
-    saveConsult(consultData.consultee.ces,consultData.consultant.ces,consultData.type,consultData.casenum,consultData.device,
+  }else{
+    consultData.durationreason="";
+    consultData.callhandler="";
+    consultData.opportunity1="";
+    consultData.opportunity2="";
+    console.log("has no log screen");
+  }
+  saveConsult(consultData.consultee.ces,consultData.consultant.ces,consultData.type,consultData.casenum,consultData.device,
                consultData.duration,consultData.durationreason,consultData.reason,consultData.callhandler,
                consultData.opportunity1,consultData.opportunity2,consultData.timestamp,consultData.summary,consultData.room,getTranscript(consultData));
-  }
   socket.emit('end consult',consultData);
   $('#'+consultData.room+'-link').remove();
   $('#'+consultData.room+'-window').remove();
@@ -707,7 +827,7 @@ function addAvailable(data){
   $('.'+randomClass+'>.available-list-item-name').html(data.name);
 }
 
-function addOnline(type,subtype,CES,name,lob){
+function addOnline(type,subtype,CES,name,lob,center){
   $('#'+CES+'.online-list-item').remove();
   var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
   var gentype;
@@ -728,8 +848,25 @@ function addOnline(type,subtype,CES,name,lob){
   $('.online-list-item-template').clone().attr('class','online-list-item').attr('id',CES).addClass(randomClass).appendTo('.'+gentype+'-online>#'+subtype+type+'.online-list');
   $('.'+randomClass+'>.online-list-item-lob').addClass('lob-'+lob);
   $('.'+randomClass+'>.online-list-item-name').html(name);
-
-  
+  sortList2('#'+subtype+type+'.online-list');
+  if(!($('#'+CES+'.center-online-item').length>0)){
+      console.log(center);
+      try{
+        if((center!='IOPEX')&&(center!='ARLO')){
+          $('#cnx-window>.center-online').append('<div class="center-online-item" id='+CES+'>'+name+'</div>');
+          sortList3('#cnx-window>.center-online');
+        }else{
+          $('#'+center.toLowerCase()+'-window>.center-online').append('<div class="center-online-item" id='+CES+'>'+name+'</div>');
+          sortList3('#'+center.toLowerCase()+'-window>.center-online');
+        }
+      }catch(err){
+        
+      }
+      $('#'+CES+'.center-online-item').on('click',function(event){
+        //popupChat(event,CES,name);
+      })
+      
+  }
   /*if(CES!=userCES){
     $('.'+randomClass).on('click',function(event){
       popupChat(event,CES,name);
@@ -739,6 +876,28 @@ function addOnline(type,subtype,CES,name,lob){
 
 function sortList(className){
   $(className).sort(function(a, b) {
+    if (a.textContent < b.textContent) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }).appendTo($(className));
+}
+
+function sortList2(className){
+  var listItems=$(className).children();
+  $(listItems).sort(function(a, b) {
+    if ($(a).children()[1].textContent < $(b).children()[1].textContent) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }).appendTo($(className));
+}
+
+function sortList3(className){
+  var listItems=$(className).children();
+  $(listItems).sort(function(a, b) {
     if (a.textContent < b.textContent) {
       return -1;
     } else {
@@ -779,7 +938,6 @@ function showQueue(){
 }
 
 function showLobby(){
-  console.log($('.container>.subcontainer').css('z-index'));
   $('.subcontainer').css('z-index','19')
   $('.consult-link').removeClass('active');
   $('.lobby-container').css('z-index','20');
@@ -800,6 +958,19 @@ function popupChat(event,CES,name){
     newChat(randomClass,CES,name);
     $('.chat-popup').css('display','none');
   });
+}
+
+function popupCommand(){
+  var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+  console.log("popping");
+  console.log(event.pageX);
+  console.log(event.pageY);
+  console.log($(".chat-popup"));
+  $(".command-popup").unbind('click');
+  $('.command-popup').css('left',event.pageX);      // <<< use pageX and pageY
+  $('.command-popup').css('top',event.pageY);
+  $('.command-popup').css('display','inline');     
+  $(".command-popup").css("position", "absolute");
 }
 
 function clearConsultForm(){
@@ -1007,13 +1178,14 @@ function saveConsult(L1,L2,type,casenumber,product,duration,durationreason,reaso
     consult_timestamp:datetime,
     consult_summary:summary,
     consult_room:room,
-    consult_transcript:transcript
+    consult_transcript:transcript,
+    consult_updatedby:$('#'+room+'-window .log-screen').length>0?"consultant":"consultee"
   }
   console.log(data);
 
   $.ajax({
     type:"POST",
-    url:"/api/consults/add" ,
+    url:"/api/consults/update" ,
     data:JSON.stringify(data),
     headers:{
       "Content-Type":"application/json"
@@ -1052,4 +1224,20 @@ function showNotification(title,message) {
 		   requireInteraction: true 
 		})
     notification.onclick = function(x) { window.focus(); $('.queue-button').click(); this.close(); };
-	}
+}
+
+function showError(message,withClose){
+    if(withClose){
+      $('#error-close').html('&times');
+      $('.error-prompt-ok').removeClass('hiddenDiv');
+    }else{
+      $('#error-close').html('');
+      $('.error-prompt-ok').addClass('hiddenDiv');
+    }
+    $('.error-prompt-message').html(message);
+    $('#error-prompt').css('display','block');   
+}
+
+function hideError(){
+  $('#error-prompt').css('display','none'); 
+}

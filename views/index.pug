@@ -28,7 +28,7 @@ html
             .sidebar-container
                 .sidebar
             .navbar
-                a#modal_btn_comment(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
+                a#logout(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
                 a#consult-new(href='#')
                     i.fa.fa-fw.fa-envelope
                     |  New Consult
@@ -36,12 +36,16 @@ html
                     a#rma-new(href='#')
                         i.fa.fa-fw.fa-envelope
                         |  RMA Approval
-                a.queue-button(href='#' onclick='showQueue();')
+                a.queue-button.side-link(href='#')
                     i.fa.fa-fw.fa-search
                     |  Queue
-                a.lobby-button(href='#' onclick='showLobby();')
+                a.lobby-button.side-link(href='#')
                     i.fa.fa-fw.fa-search
                     |  Lobby
+                if(userCES==193199)
+                    a.command-button.side-link(href='#', style='float:right')
+                        i.fa.fa-fw.fa-bullhorn
+                        |  Command
             .queue-container.subcontainer
                 .queue-window.l2-dashboard
                     .title L2 Consult
@@ -101,6 +105,15 @@ html
                     #L1SME.online-list
         .chat-popup
             | Initiate Chat
+        .command-popup
+            .holdConsult
+                | Hold Consults
+            .unholdConsult
+                | Unhold Consults
+            .reloadWindows
+                | Reload Windows
+            .logoutAll
+                | Logout All
         #consult-entry.modal
             .modal-content
                 span#consult-close.close &times;
@@ -301,6 +314,19 @@ html
                         i.fa.fa-fw.fa-send-o
                     textarea.consult-input(rows='5')
             .consult-link-template
+            .center-container-template
+                .center-online
+                .message-options
+                    span.message-options-setpin.button-link Set Pinned Message
+                    .message-options-center-online
+                    .message-options-pinned
+                .center-bar
+                    span.center-file-button.button-link
+                        i.fa.fa-fw.fa-paperclip
+                    span.center-send-button.button-link
+                        i.fa.fa-fw.fa-send-o
+                    textarea.center-input(rows='5')
+            .center-link-template
             .chat-container-template
                 .message-options
                     .message-options-close.button-link Close Chat

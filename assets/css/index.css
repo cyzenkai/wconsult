@@ -64,8 +64,7 @@ body {
     display: flex;
 }
 
-.consult-link{
-
+.consult-link, .center-link{
   border-top:0px;
   border-right:0px;
   margin:auto;
@@ -75,7 +74,7 @@ body {
   cursor:pointer;
   font-size:12px;
   white-space:normal;
-  max-width:160px;
+  width:140px;
   background-color:#dbe9ff;
   border-radius: 3px;
   box-shadow: inset 2px 2px 3px 3px rgba(255,255,255,0.7),inset -2px -2px 4px 0px rgba(0,0,0,0.7);
@@ -100,7 +99,7 @@ body {
   display:none;
 }
 
-.consult-input{
+.consult-input, .center-input{
   border-radius:5px;
   height:45px;
   width:calc(100% - 190px);
@@ -109,7 +108,7 @@ body {
   float:right;
 }
 
-.consult-send-button{
+.consult-send-button, .center-send-button{
   width:50px;
   float:right;
   margin-right:10px;
@@ -122,7 +121,7 @@ body {
   border-width:2px;
 }
 
-.consult-file-button{
+.consult-file-button, .center-file-button{
   float:left;
   width:50px;
   margin-right:10px;
@@ -135,7 +134,7 @@ body {
   border-width:2px;
 }
 
-.consult-bar {
+.consult-bar, .center-bar {
   width:calc(100% - 170px);
   background-color: #ddd;
   overflow: auto;
@@ -149,7 +148,7 @@ body {
   overflow-x: hidden;
 }
 
-.consult-container{
+.consult-container, .center-container{
   width:calc(100% - 430px);
   height:calc(100% - 202px);
   min-width:360px;
@@ -445,6 +444,10 @@ body {
   height:60px!important;
 }
 
+.center-online-item{
+  cursor:pointer;
+}
+
 .queue-container{
   display:flex;
   flex-wrap:wrap;
@@ -593,6 +596,23 @@ body {
   font-size:8pt;
 }
 
+.center-online{
+  top:0px;
+  left:0px;
+  width:210px;
+  height:calc(100% - 170px);
+  margin-left:161px;
+  margin-top:85px;
+  background-color: white;
+  z-index:20;
+  position:fixed;
+  padding-top:20px;
+  padding-left:20px;
+  padding-right:20px;
+  overflow-y: auto;
+  font-size:8pt;
+}
+
 .ongoing-list-item-duration{
   float:right!important;
   border:1px solid black!important;
@@ -602,7 +622,7 @@ body {
   
 }
 
-.chat-popup{
+.chat-popup,.command-popup,.command-popup>div{
   border:1px solid black;
   z-index:99;
   background-color:white;
@@ -611,7 +631,7 @@ body {
   cursor:pointer;
 }
 
-.chat-popup:hover{
+.chat-popup:hover,.command-popup>div:hover{
   background-color:#458556;
   color:white;
 }
@@ -853,6 +873,11 @@ input:checked + .rma-slider:after
   color:#ffd6d6;
 }
 
+a.active {
+  background-color:black;
+  box-shadow: none;
+}
+
 .active {
   background-color: #11ff00;
   box-shadow: inset -3px -3px 3px 3px rgba(255,255,255,0.5),inset 2px 2px 3px 3px rgba(0,0,0,0.4);
@@ -878,7 +903,7 @@ input:checked + .rma-slider:after
 
 .new-message{
     color: #fff;
-		padding: 10px;
+
 		display: inline-block;
 		animation: newMessage 5s infinite;
 }

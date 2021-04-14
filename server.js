@@ -204,15 +204,15 @@ app.post("/api/consults/add", (req, res, next) => {
         consults_type:req.body.consult_type.toUpperCase(),
         consult_casenumber:req.body.consult_casenumber,
         consult_product:req.body.consult_product,
-        consult_duration:req.body.consult_duration,
-        consult_durationreason:req.body.consult_durationreason,
-        consult_callhandler:req.body.consult_callhandler,
+        consult_duration:"",
+        consult_durationreason:"",
+        consult_callhandler:"",
         consult_invalidreason:req.body.consult_invalidreason,
-        consult_opportunity:req.body.consult_opportunity,
+        consult_opportunity:"",
         consult_timestamp:req.body.consult_timestamp,
         consult_summary:req.body.consult_summary,
         consult_room:req.body.consult_room,
-        consult_transcript:req.body.consult_transcript
+        consult_transcript:""
     }
     
     console.log(data);
@@ -245,6 +245,78 @@ app.post("/api/consults/add", (req, res, next) => {
         });
 
     });
+    
+})
+
+app.post("/api/consults/update", (req, res, next) => {
+    var errors=[]
+    if (errors.length){
+        res.status(400).json({"error":errors.join(",")});
+        return;
+    }
+    console.log(req.body);
+    var data = {
+        consults_L1:req.body.L1_list_consult_source,
+        consults_L2:req.body.L2_list_consult,
+        consults_type:req.body.consult_type.toUpperCase(),
+        consult_casenumber:req.body.consult_casenumber,
+        consult_product:req.body.consult_product,
+        consult_duration:req.body.consult_duration,
+        consult_durationreason:req.body.consult_durationreason,
+        consult_callhandler:req.body.consult_callhandler,
+        consult_invalidreason:req.body.consult_invalidreason,
+        consult_opportunity:req.body.consult_opportunity,
+        consult_timestamp:req.body.consult_timestamp,
+        consult_summary:req.body.consult_summary,
+        consult_room:req.body.consult_room,
+        consult_transcript:req.body.consult_transcript,
+        consult_updatedby:req.body.consult_updatedby
+    }
+    
+    console.log(data);
+    var sql = "SELECT consults_updatedby from consult_log WHERE consults_room='"+data.consult_room+"'";
+    var params = []
+    db.query(sql, params, (err, rows) => {
+        console.log(rows);
+        if (err) {
+            console.log(err);
+          //res.status(400).json({"error":err.message});
+          //return;
+        }
+        if(rows[0].consults_updateby!='L2'){
+            var sql ='UPDATE consult_log SET consults_duration = ?, consults_durationreason = ?, consults_followedcallhandler = ?,consults_opportunity = ?,consults_updatedby = ? WHERE consults_room = ?'
+            var params =[data.consult_duration,data.consult_durationreason,data.consult_callhandler,data.consult_opportunity,data.consult_updatedby,data.consult_room];
+            console.log(sql);
+            db.query(sql, params, function (err, result) {
+                if (err){
+                    //res.status(400).json({"error": err.message})
+                    console.log(err.message);
+                    return;
+                }
+
+                var sql ='INSERT INTO transcript (transcript_room,transcript_text) VALUES (?,?)'
+                var sql ='UPDATE transcript SET transcript_text=? WHERE transcript_room = ?'
+                var params =[data.consult_transcript,data.consult_room];
+                console.log(sql);
+                db.query(sql, params, function (err, result) {
+                    if (err){
+                        //res.status(400).json({"error": err.message})
+                        console.log(err.message);
+                        return;
+                    }
+                    res.json({
+                        "message": "success",
+                        "data": data,
+                        "id" : this.lastID
+
+                    })
+
+                });
+
+            });
+        }
+    });
+    
     
 })
 
@@ -863,10 +935,9 @@ var L2Waiting=[];
 var RMAWaiting=[];
 var ongoingConsult=[];
 var socketCES;
-var serverRefresh=true;
 var userWaiting=[];
 var d=[];
-var reloaded=setInterval(function(){serverRefresh=false;clearInterval(reloaded)},5000);
+var consultHold;
 io.on('connection', function(socket){
     //console.log(socket);
     
@@ -875,18 +946,35 @@ io.on('connection', function(socket){
     var traineeAvail = false;
     
     userID=socket.id;
+  
+    socket.on('reload windows',function(seconds){
+        io.emit('reload window',seconds);
+    })
+  
+    socket.on('hold consult',function(){
+        socket.broadcast.emit('hold consult');
+        consultHold=true;
+    })
+  
+    socket.on('unhold consult',function(){
+        socket.broadcast.emit('unhold consult');
+        consultHold=false;
+    })
 
     socket.on('setSocketID',function(data){
-        if(serverRefresh){
-           io.to(userID).emit('reload window');
+
+        if((consultHold)&&(data.user.users_CES!=193199)){
+          io.to(userID).emit('hold consult');
         }
         var userdata={
             id:userID,
             ces:data.user.users_CES,
             name:data.user.users_CN,
             lob:data.user.users_LOB.split(" ")[0],
-            type:data.user.users_type.split(" ")[2]
+            type:data.user.users_type.split(" ")[2],
+            center:data.user.users_center
         }
+        console.log(userdata);
         console.log("search disconnect data");
         console.log(onlineUsers.findIndex(item => item.ces === userdata.ces));
         if(onlineUsers.findIndex(item => item.ces === userdata.ces)>=0){
@@ -898,6 +986,7 @@ io.on('connection', function(socket){
         }else{
             onlineUsers.push(userdata);
         }
+        io.to(userdata.id).emit('join center','cnx',0);
         console.log(onlineUsers);
         io.to(userID).emit('user list',onlineUsers);
         io.to(userID).emit('ongoing list',ongoingConsult);
@@ -966,9 +1055,45 @@ io.on('connection', function(socket){
         
     });
 
-    socket.on('disconnect me', function(ces){
- 
-    })
+    socket.on('logout', function(ces){
+       var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+        console.log(onlineUsers);
+     
+        if(onlineUsers.findIndex(item => item.id === userID)>=0){
+              console.log(L2Waiting);
+              console.log(onlineUsers);
+              console.log(userWaiting);
+              userWaiting=L2Waiting.filter(obj => {return obj.ces === ces}).concat(CCTWaiting.filter(obj => {return obj.ces === ces})).concat(RMAWaiting.filter(obj => {return obj.ces === ces}));
+              userWaiting.forEach(function(waiting,index){
+                console.log(waiting.type);
+                switch(waiting.type.toUpperCase()){
+                  case "L2":L2Waiting.splice(L2Waiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
+                  case "CCT":CCTWaiting.splice(CCTWaiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
+                  case "RMA":RMAWaiting.splice(RMAWaiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
+                }
+                console.log(L2Waiting);
+                io.emit('cancel consult',{type:waiting.type,casenum:waiting.casenum,abandon:true});
+                secToDuration(nowDate-new Date(waiting.requestTime));
+                var abandonData={
+                  type:waiting.type.toUpperCase(),
+                  duration:secToDuration(nowDate-new Date(waiting.requestTime)),
+                  ces:waiting.ces,
+                  casenum:waiting.casenum,
+                  reason:"Consultee Disconnected"
+                }
+                abandonConsult(abandonData);
+                userWaiting=[];
+              });  
+              onlineUsers.splice(onlineUsers.findIndex(item => item.id === userID), 1);
+          
+          
+            socket.broadcast.emit('user disconnect',ces);
+            var ongoingUser=(ongoingConsult.filter(obj => {return obj.consultant.ces === ces})).concat(ongoingConsult.filter(obj => {return obj.consultee.ces === ces}))
+            ongoingUser.forEach(function(ongoing){
+                socket.to(ongoing.room).emit('user disconnected from room',ongoing);
+            })
+        }
+    });
 
     socket.on('consult request',function(data){
         var nowDate=new Date((new Date()).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
@@ -1054,6 +1179,7 @@ io.on('connection', function(socket){
                                 console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id);
                                 io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData,0);
                                 io.to(socket.id).emit('join room',consultData,0);
+                                saveConsult(consultData);
                                 ongoingConsult.push(consultData);
                                 io.emit('add ongoing',consultData);
                                 io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum,abandon:false});
@@ -1072,7 +1198,7 @@ io.on('connection', function(socket){
                         if(onlineUsers.findIndex(item => item.ces === CCTWaiting[index].ces)>=0){
                             console.log(waiting.usertype);
                             console.log(data.usertype);
-                            if(waiting.usertype!=data.usertype){
+                            if(waiting.usertype+" "+waiting.lob.split(" ")[0]!=data.usertype+" "+data.userlob){
                                 var consultPop=CCTWaiting.splice(index,1)[0];
                                 console.log('consultPop')
                                 console.log(consultPop);
@@ -1101,6 +1227,7 @@ io.on('connection', function(socket){
                                 console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id);
                                 io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData);
                                 io.to(socket.id).emit('join room',consultData,0);
+                                saveConsult(consultData);
                                 ongoingConsult.push(consultData);
                                 io.emit('add ongoing',consultData);
                                 io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum,abandon:false});
@@ -1119,7 +1246,7 @@ io.on('connection', function(socket){
                         if(onlineUsers.findIndex(item => item.ces === RMAWaiting[index].ces)>=0){
                             console.log(waiting.usertype);
                             console.log(data.usertype);
-                            if(waiting.usertype!=data.usertype){
+                            if(waiting.usertype+" "+waiting.lob.split(" ")[0]!=data.usertype+" "+data.userlob){
                                 var consultPop=RMAWaiting.splice(index,1)[0];
                                 console.log('consultPop')
                                 console.log(consultPop);
@@ -1149,6 +1276,7 @@ io.on('connection', function(socket){
                                 console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id);
                                 io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData);
                                 io.to(socket.id).emit('join room',consultData,0);
+                                saveConsult(consultData);
                                 ongoingConsult.push(consultData);
                                 io.emit('add ongoing',consultData);
                                 io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum,abandon:false});
@@ -1192,6 +1320,9 @@ io.on('connection', function(socket){
             message.timeReceive=nowDate;
             ongoingConsult[ongoingConsult.findIndex(item => item.room === message.room)].messages.push(message);
             io.in(message.room).emit('consult message',message);
+        }else{
+            message.timeReceive=nowDate;
+            io.in(message.room).emit('consult message',message);
         }
     })
   
@@ -1199,6 +1330,7 @@ io.on('connection', function(socket){
         if(ongoingConsult.findIndex(item => item.room === consultData.room)>=0){
             if(consultData.consultee.ces==onlineUsers[onlineUsers.findIndex(item => item.id === userID)].ces){
               socket.to(consultData.room).emit('end consult',consultData);
+              ongoingConsult.splice(ongoingConsult.findIndex(item => item.room === consultData.room),1);
             }else{
               socket.to(consultData.room).emit('end consult',consultData);
               ongoingConsult.splice(ongoingConsult.findIndex(item => item.room === consultData.room),1);
@@ -1211,6 +1343,10 @@ io.on('connection', function(socket){
     socket.on('abandon consult',function(abandonData){
         abandonConsult(abandonData);
     });
+  
+    socket.on('logout all',function(){
+        socket.broadcast.emit('force logout');
+    })
         
 
 
@@ -1249,6 +1385,49 @@ function secToDuration(seconds){
   var duration=('0'+hours).substr(('0'+hours).length-2,2)+":"+('0'+minutes).substr(('0'+minutes).length-2,2)+":"+('0'+sec).substr(('0'+sec).length-2,2);
   console.log(duration);
   return duration;
+}
+
+function saveConsult(consultData){
+    var data = {
+        consults_L1:consultData.consultee.ces,
+        consults_L2:consultData.consultant.ces,
+        consults_type:consultData.type.toUpperCase(),
+        consult_casenumber:consultData.casenum,
+        consult_product:consultData.device,
+        consult_duration:"",
+        consult_durationreason:"",
+        consult_callhandler:"",
+        consult_invalidreason:consultData.reason,
+        consult_opportunity:"",
+        consult_timestamp:consultData.requestTime,
+        consult_summary:consultData.summary,
+        consult_room:consultData.room,
+        consult_transcript:""
+    }
+    
+    console.log(data);
+    var sql ='INSERT INTO consult_log (consults_L1,consults_L2,consults_type,consults_casenumber,consults_product,consults_duration,consults_durationreason,consults_followedcallhandler,consults_reason,consults_opportunity,consults_timestamp,consults_summary,consults_room) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)'
+    var params =[data.consults_L1,data.consults_L2,data.consults_type,data.consult_casenumber,data.consult_product,data.consult_duration,data.consult_durationreason,data.consult_callhandler,data.consult_invalidreason,data.consult_opportunity,data.consult_timestamp,data.consult_summary,data.consult_room];
+	  console.log(sql);
+    db.query(sql, params, function (err, result) {
+        if (err){
+            //res.status(400).json({"error": err.message})
+            console.log(err.message);
+            return;
+        }
+      
+        var sql ='INSERT INTO transcript (transcript_room,transcript_text) VALUES (?,?)'
+        var params =[data.consult_room,data.consult_transcript];
+        console.log(sql);
+        db.query(sql, params, function (err, result) {
+            if (err){
+                //res.status(400).json({"error": err.message})
+                console.log(err.message);
+                return;
+            }
+        });
+
+    });
 }
 
 
