@@ -163,6 +163,34 @@ body {
   overflow-y: scroll;
 }
 
+.notification-container{
+  width:180px;
+  height:calc(100% - 167px);
+  top:0px;
+  right:0px;
+  min-width:180px;
+  margin-top:49px;
+  margin-right:10px;
+  background-color: none;
+  z-index:98;
+  position:absolute;
+  padding:0px;
+  overflow-y: hidden;
+}
+.notification-item{
+  display:block;
+  width:180px;
+  height:100px;
+  min-width:180px;
+  position:relative;
+  background-color: rgba(12, 148, 73, 0.9);
+  z-index:98;
+  overflow-y: hidden;
+  margin-righ:10px;
+  margin-bottom:5px;
+  border-radius:10px;
+}
+
 .chat-input{
   border-radius:5px;
   height:45px;
@@ -360,6 +388,29 @@ body {
   background-color: green;
   color:white;
   white-space:nowrap;
+}
+
+.notification-acknowledge{
+  font-size:8pt;
+  padding: 5px;
+  border-radius:5px;
+  border-style: outset;
+  border-width:2px;
+  background-color: green;
+  color:white;
+  white-space:nowrap;
+  position:absolute;
+  right:10px;
+  bottom:10px;
+}
+.notification-source{
+  margin-top:3px;
+  text-align:center;
+}
+.notification-message{
+  margin-top:3px;
+  text-align:center;
+  font-weight:bold;
 }
 
 .message-options-close, .consult-entry-clear, .rma-entry-clear{
@@ -622,7 +673,7 @@ body {
   
 }
 
-.chat-popup,.command-popup,.command-popup>div{
+.chat-popup,.command-popup,.command-popup>div, .rta-chat-popup{
   border:1px solid black;
   z-index:99;
   background-color:white;
@@ -631,7 +682,7 @@ body {
   cursor:pointer;
 }
 
-.chat-popup:hover,.command-popup>div:hover{
+.chat-popup:hover,.command-popup>div:hover, .rta-chat-popup>div:hover{
   background-color:#458556;
   color:white;
 }
