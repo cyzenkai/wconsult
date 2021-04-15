@@ -210,29 +210,33 @@ $(function() {
     $('a#logout').click();
   })
   
-  socket.on('long hold',function(randomClass){
+  socket.on('long hold',function(randomClass,timestamp){
       console.log("received long hold "+randomClass);
-      rtaCallout('Long Hold',randomClass);
+      rtaCallout('Long Hold',randomClass,timestamp);
   })
   
-  socket.on('long call',function(randomClass){
-      rtaCallout('Long Call',randomClass);
+  socket.on('long call',function(randomClass,timestamp){
+      rtaCallout('Long Call',randomClass,timestamp);
   })
   
-  socket.on('clear outbound',function(randomClass){
-      rtaCallout('Clear Outbound',randomClass);
+  socket.on('clear outbound',function(randomClass,timestamp){
+      rtaCallout('Clear Outbound',randomClass,timestamp);
   })
   
-  socket.on('clear training',function(randomClass){
-      rtaCallout('Clear Training',randomClass);
+  socket.on('clear training',function(randomClass,timestamp){
+      rtaCallout('Clear Training',randomClass,timestamp);
   })
   
-  socket.on('over break',function(randomClass){
-      rtaCallout('Overbreak',randomClass);
+  socket.on('over break',function(randomClass,timestamp){
+      rtaCallout('Overbreak',randomClass,timestamp);
   })
   
-  socket.on('invalid aux',function(randomClass){
-      rtaCallout('Unscheduled Break',randomClass);
+  socket.on('unscheduled break',function(randomClass,timestamp){
+      rtaCallout('Unscheduled Break',randomClass,timestamp);
+  })
+  
+  socket.on('clear aftercall',function(randomClass,timestamp){
+      rtaCallout('Clear Aftercall',randomClass,timestamp);
   })
 
 
@@ -353,6 +357,13 @@ $(function() {
     $('.side-link').removeClass('active');
     $('.lobby-button').addClass('active');
     showLobby();
+  })
+  
+  $('.callouts-button').on('click',function(){
+    //$('.subcontainer').css('z-index','19');
+    $('.side-link').removeClass('active');
+    $('.callouts-button').addClass('active');
+    showCallouts();
   })
   
   $('.holdConsult').on('click',function(){
@@ -916,7 +927,7 @@ function popupRTA(event,CES,name){
   $('.rta-callout').toArray().forEach(function(callout){
       $(callout).on('click',function(){
           console.log('sending '+$(callout).attr('id'));
-          socket.emit($(callout).attr('id'),CES);
+          socket.emit($(callout).attr('id'),CES,userCES);
           $('.rta-callout').toArray().forEach(function(callout){
               $(callout).unbind('click');
           })
@@ -994,6 +1005,12 @@ function showLobby(){
   $('.subcontainer').css('z-index','19')
   $('.consult-link').removeClass('active');
   $('.lobby-container').css('z-index','20');
+}
+
+function showCallouts(){
+  $('.subcontainer').css('z-index','19')
+  $('.consult-link').removeClass('active');
+  $('.callouts-container').css('z-index','20');
 }
 
 function popupChat(event,CES,name){
@@ -1295,12 +1312,17 @@ function hideError(){
   $('#error-prompt').css('display','none'); 
 }
 
-function rtaCallout(message,randomClass){
+function rtaCallout(message,randomClass,timestamp){
+    console.log(message);
+    var nowDate=new Date((timestamp).toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+    var nowTime=(((nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())<10)?('0'+(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours())):(nowDate.getHours()>12?nowDate.getHours()-12:nowDate.getHours()))+":"+((nowDate.getMinutes()<10)?('0'+nowDate.getMinutes()):(nowDate.getMinutes()))+":"+((nowDate.getSeconds()<10)?('0'+nowDate.getSeconds()):(nowDate.getSeconds()))+(nowDate.getHours()>12?" PM":" AM");
     $('.notification-item-template').clone().attr('class','notification-item').attr('id',randomClass).appendTo('.notification-container');
     $('#'+randomClass+'.notification-item>.notification-source').html("RTA");
     $('#'+randomClass+'.notification-item>.notification-message').html(message);
+    $('#'+randomClass+'.notification-item>.notification-timestamp').html(nowTime);
     $('#'+randomClass+'.notification-item>.notification-acknowledge').on('click',function(){
         $('#'+randomClass+'.notification-item').hide('slow',function(){$('#'+randomClass+'.notification-item').remove()});
+        socket.emit('acknowledged callout',randomClass);
     })
     $('#notificationAudio').trigger('play');
   
