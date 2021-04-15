@@ -938,6 +938,7 @@ var socketCES;
 var userWaiting=[];
 var d=[];
 var consultHold;
+var callouts=[];
 io.on('connection', function(socket){
     //console.log(socket);
     
@@ -1005,6 +1006,11 @@ io.on('connection', function(socket){
               console.log("for each message");
               io.to(userdata.id).emit('consult message',message);
             });
+        })
+        var ongoingCallouts=(callouts.filter(obj => {return obj.ces === userdata.ces}))
+        console.log(ongoingCallouts);
+        ongoingCallouts.forEach(function(ongoing){
+            io.to(userdata.id).emit(ongoing.callout.toLowerCase(),ongoing.randomClass,ongoing.timestamp);
         })
     })
 
@@ -1348,50 +1354,83 @@ io.on('connection', function(socket){
         socket.broadcast.emit('force logout');
     })
   
-    socket.on('longHold',function(ces){
+    socket.on('longHold',function(ces,source){
+        var nowDate=new Date();
         console.log('received long hold '+ces);
         var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
         console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id);
-        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('long hold',randomClass);
-        saveCallout(ces,'Long Hold',randomClass);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('long hold',randomClass,nowDate);
+        saveCallout(ces,source,'Long Hold',randomClass,nowDate);
     })
   
-    socket.on('longCall',function(ces){
+    socket.on('longCall',function(ces,source){
+        var nowDate=new Date();
         var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
-        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('long call',randomClass);
-        saveCallout(ces,'Long Call',randomClass);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('long call',randomClass,nowDate);
+        saveCallout(ces,source,'Long Call',randomClass,nowDate);
     })
   
-    socket.on('clearOutbound',function(ces){
+    socket.on('clearOutbound',function(ces,source){
+        var nowDate=new Date();
         var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
-        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('clear outbound',randomClass);
-        saveCallout(ces,'Clear Outbound',randomClass);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('clear outbound',randomClass,nowDate);
+        saveCallout(ces,source,'Clear Outbound',randomClass,nowDate);
     })
   
-    socket.on('clearTraining',function(ces){
+    socket.on('clearTraining',function(ces,source){
+        var nowDate=new Date();
         var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
-        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('clear training',randomClass);
-        saveCallout(ces,'Clear Training',randomClass);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('clear training',randomClass,nowDate);
+        saveCallout(ces,source,'Clear Training',randomClass,nowDate);
     })
   
-    socket.on('overBreak',function(ces){
+    socket.on('overBreak',function(ces,source){
+        var nowDate=new Date();
         var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
-        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('over break',randomClass);
-        saveCallout(ces,'Overbreak',randomClass);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('over break',randomClass,nowDate);
+        saveCallout(ces,source,'Over Break',randomClass,nowDate);
     })
   
-    socket.on('invalidAux',function(ces){
+    socket.on('unscheduledBreak',function(ces,source){
+        var nowDate=new Date();
         var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
-        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('invalid aux',randomClass);
-        saveCallout(ces,'Unscheduled Aux',randomClass);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('unscheduled break',randomClass,nowDate);
+        saveCallout(ces,source,'Unscheduled Break',randomClass,nowDate);
+    })
+  
+    socket.on('clearAftercall',function(ces,source){
+        var nowDate=new Date();
+        var randomClass=Math.random().toString(36).replace(/[^a-z,0-9]+/g, '').substr(0, 10);
+        io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === ces)].id).emit('clear aftercall',randomClass,nowDate);
+        saveCallout(ces,source,'Clear Aftercall',randomClass,nowDate);
+    })
+  
+    socket.on('acknowledged callout',function(randomClass){
+        acknowledgeCallout(randomClass);
     })
         
 
 
   
 });
-  function saveCallout(ces,callout){
-    
+  function saveCallout(ces,source,callout,randomClass,timestamp){
+      var callout={
+          ces:ces,
+          source:source,
+          callout:callout,
+          randomClass:randomClass,
+          timestamp:timestamp
+      }
+      //save to database
+      callouts.push(callout);
+  }
+
+  function acknowledgeCallout(randomClass){
+      if(callouts.findIndex(item => item.randomClass === randomClass)>=0){
+          //update database;
+          callouts.splice(callouts.findIndex(item => item.randomClass === randomClass), 1)
+          console.log(callouts);
+      }
   }
 
   function abandonConsult(abandonData){
