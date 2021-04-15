@@ -5,6 +5,7 @@ body {
   min-width:1600px;
   width: auto !important;
   width:1600px;
+  overflow-x:hidden;
 }
 
 .navbar {
@@ -148,7 +149,7 @@ body {
   overflow-x: hidden;
 }
 
-.consult-container, .center-container{
+.consult-container{
   width:calc(100% - 430px);
   height:calc(100% - 202px);
   min-width:360px;
@@ -160,6 +161,37 @@ body {
   padding-top:20px;
   padding-left:20px;
   padding-right:20px;
+  overflow-y: scroll;
+}
+
+.center-container{
+  width:calc(100% - 369px);
+  height:calc(100% - 202px);
+  min-width:360px;
+  margin-left:370px;
+  margin-top:85px;
+  background-color: white;
+  z-index:20;
+  position:fixed;
+  padding-top:20px;
+  padding-left:20px;
+  padding-right:20px;
+  overflow-y: scroll;
+}
+
+.callouts-container{
+  width:calc(100% - 143px);
+  height:calc(100% - 44px);
+  min-width:360px;
+  top:0px;
+  margin-left:160px;
+  margin-top:44px;
+  background-color: white;
+  z-index:20;
+  position:fixed;
+  padding-top:0px;
+  padding-left:0px;
+  padding-right:0px;
   overflow-y: scroll;
 }
 
@@ -320,8 +352,7 @@ body {
 .message-options {
   width:calc(100% - 170px);
   background-color: #ddd;
-//  overflow: auto;
-  z-index:20;
+  z-index:19;
   position:fixed;
   right:0px;
   top: 44px; /* Stay at the top */
@@ -650,16 +681,16 @@ body {
 .center-online{
   top:0px;
   left:0px;
-  width:210px;
+  width:220px;
   height:calc(100% - 170px);
-  margin-left:161px;
+  margin-left:160px;
   margin-top:85px;
-  background-color: white;
+  background-color: #eeeeee;
   z-index:20;
   position:fixed;
-  padding-top:20px;
-  padding-left:20px;
-  padding-right:20px;
+  padding-top:5px;
+  padding-left:5px;
+  padding-right:5px;
   overflow-y: auto;
   font-size:8pt;
 }
@@ -992,4 +1023,12 @@ a.active {
   margin-right:auto;
   whitespace: nowrap;
   font-size:10px;
+}
+
+.notification-timestamp{
+  color:#eeeeee;
+  font-size:10px;
+  position:absolute;
+  left:10px;
+  bottom:10px;
 }
