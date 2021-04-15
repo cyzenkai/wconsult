@@ -31,18 +31,23 @@ html
                 .sidebar
             .navbar
                 a#logout(href='#', style='float:right', onclick="console.log(document.cookie);document.cookie = 'token=;expires=;path=/';document.cookie = 'refreshToken=;expires=;path=/';document.cookie = 'userdetails=;expires=;path=/';window.open('/','_self',true);") Logout
-                a#consult-new(href='#')
-                    i.fa.fa-fw.fa-envelope
-                    |  New Consult
-                if((userLevel!='2')&&(userType!='TM'))
+                if(userLOB=='RTA ARLO')
+                    a.callouts-button(href='#')
+                        i.fa.fa-fw.fa-bullhorn
+                        |  Callouts
+                if(userLOB!='RTA ARLO')
+                    a#consult-new(href='#')
+                        i.fa.fa-fw.fa-blind
+                        |  New Consult
+                if((userLevel!='2')&&(userType!='TM')&&(userLOB!='RTA ARLO'))
                     a#rma-new(href='#')
-                        i.fa.fa-fw.fa-envelope
+                        i.fa.fa-fw.fa-truck
                         |  RMA Approval
                 a.queue-button.side-link(href='#')
-                    i.fa.fa-fw.fa-search
+                    i.fa.fa-fw.fa-align-justify
                     |  Queue
                 a.lobby-button.side-link(href='#')
-                    i.fa.fa-fw.fa-search
+                    i.fa.fa-fw.fa-address-card
                     |  Lobby
                 if(userCES==193199)
                     a.command-button.side-link(href='#', style='float:right')
@@ -117,12 +122,14 @@ html
                 | Long Call
             #clearOutbound.rta-callout
                 | Clear Outbound
+            #clearAftercall.rta-callout
+                | Clear Aftercall
             #clearTraining.rta-callout
                 | Clear Training
             #overBreak.rta-callout
                 | Over Break
-            #invalidAux.rta-callout
-                | Unscheduled Aux
+            #unscheduledBreak.rta-callout
+                | Unscheduled Break
         .command-chat-popup
             | Initiate Chat
         .command-popup
@@ -135,7 +142,7 @@ html
             .logoutAll
                 | Logout All
         .notification-container
-            
+        .callouts-container.subcontainer
         #consult-entry.modal
             .modal-content
                 span#consult-close.close &times;
@@ -377,7 +384,8 @@ html
             .team-link-template
             .notification-item-template
                 .notification-source
-                .notification-message        
+                .notification-message
+                .notification-timestamp
                 .notification-acknowledge.button-link Acknowledge
             .message-template
                 .message-name
