@@ -468,7 +468,7 @@ body {
 
 .get-consult{
   text-align:center;
-  display:none;
+  display:block;
 }
 
 .button-link:hover{

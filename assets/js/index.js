@@ -58,12 +58,12 @@ $(function() {
   
   
   console.log(userLOB.split(" ")[0]+" "+userlevel);
-  switch(userLOB.split(" ")[0]+" "+userlevel){
+/*  switch(userLOB.split(" ")[0]+" "+userlevel){
     case "TM 1":
     case "TM 2":
     case "L2 2":$('.get-consult-l2').css('display','block');$('.get-consult-rma').css('display','block');break;
     case "CCT 1":$('.get-consult-cct').css('display','block');break;
-  }
+  }*/
 
   socket = io(document.location.hostname+(document.location.port==''?"":":"+document.location.port));
   console.log(socket.id);
@@ -297,6 +297,36 @@ $(function() {
 
   $('#consult-new').on('click',function() {
     $('#consult-entry').css('display','block');
+    $('#consult-entry.modal>.modal-content>div.row').first().css('display','block');
+    $('.consult-entry-request').text('Request Consult');
+    if(userLOB.split(" ")[0]+" "+userlevel=='L2 2'){
+      $('#consult-entry-type').prop('checked',true);
+      $('#consult-entry-type').change();
+      $('#consult-entry-type').attr('disabled','disabled');
+    }else if(userLOB.split(" ")[0]+" "+userlevel=='CCT 1'){
+      $('#consult-entry-type').prop('checked',false);
+      $('#consult-entry-type').change();
+      $('#consult-entry-type').attr('disabled','disabled');
+    }
+    getDataRecord('/api/devices',function(devices){
+      //$("#consult_product").html('');
+      $("#consult-entry-device").empty();
+      $('#consult-entry-device').append(new Option('Select Device', 0, true, true));
+      $('#consult-entry-device > option').attr('disabled','disabled');
+      devices.sort((a, b) => (a["device_name"] > b["device_name"]) ? 1 : -1)
+      devices.forEach(data => {
+        //console.log(data);
+        $("#consult-entry-device").append(new Option(data.device_name + "    (" + data.device_model + ")", data.device_model));
+      });     
+    },'');
+    console.log("click");
+  })
+    
+  $('#sup-new').on('click',function() {
+    $('#consult-entry').css('display','block');
+    console.log($('#consult-entry.modal>.modal-content>div.row').first());
+    $('.consult-entry-request').text('Request Supcall');
+    $('#consult-entry.modal>.modal-content>div.row').first().css('display','none');
     if(userLOB.split(" ")[0]+" "+userlevel=='L2 2'){
       $('#consult-entry-type').prop('checked',true);
       $('#consult-entry-type').change();
@@ -1169,6 +1199,9 @@ function requestConsult(){
       summary:$('#consult-entry-summary').val().trim(),
       lob:userLOB,
       usertype:usertype
+    }
+    if($('#consult-entry.modal>.modal-content>div.row').first().css('display')=='none'){
+      data.type='SUP';
     }
     socket.emit('consult request', data);
     clearConsultForm();

@@ -933,6 +933,7 @@ var onlineUsers=[];
 var CCTWaiting=[];
 var L2Waiting=[];
 var RMAWaiting=[];
+var SUPWaiting=[];
 var ongoingConsult=[];
 var socketCES;
 var userWaiting=[];
@@ -987,13 +988,14 @@ io.on('connection', function(socket){
         }else{
             onlineUsers.push(userdata);
         }
-        io.to(userdata.id).emit('join center','cnx',0);
+        io.to(userdata.id).emit('join center',userdata.center.toLowerCase(),0);
         console.log(onlineUsers);
         io.to(userID).emit('user list',onlineUsers);
         io.to(userID).emit('ongoing list',ongoingConsult);
         io.to(userID).emit('waiting list',CCTWaiting);
         io.to(userID).emit('waiting list',L2Waiting);
         io.to(userID).emit('waiting list',RMAWaiting);
+        io.to(userID).emit('waiting list',SUPWaiting);
         socket.broadcast.emit('user connect',userdata);
         var ongoingUser=(ongoingConsult.filter(obj => {return obj.consultant.ces === userdata.ces})).concat(ongoingConsult.filter(obj => {return obj.consultee.ces === userdata.ces}))
         console.log(ongoingUser);
@@ -1025,13 +1027,14 @@ io.on('connection', function(socket){
               console.log(L2Waiting);
               console.log(onlineUsers);
               console.log(userWaiting);
-              userWaiting=L2Waiting.filter(obj => {return obj.ces === disconnectCES}).concat(CCTWaiting.filter(obj => {return obj.ces === disconnectCES})).concat(RMAWaiting.filter(obj => {return obj.ces === disconnectCES}));
+              userWaiting=L2Waiting.filter(obj => {return obj.ces === disconnectCES}).concat(CCTWaiting.filter(obj => {return obj.ces === disconnectCES})).concat(RMAWaiting.filter(obj => {return obj.ces === disconnectCES})).concat(SUPWaiting.filter(obj => {return obj.ces === disconnectCES}));
               userWaiting.forEach(function(waiting,index){
                 console.log(waiting.type);
                 switch(waiting.type.toUpperCase()){
                   case "L2":L2Waiting.splice(L2Waiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
                   case "CCT":CCTWaiting.splice(CCTWaiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
                   case "RMA":RMAWaiting.splice(RMAWaiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
+                  case "SUP":SUPWaiting.splice(SUPWaiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
                 }
                 console.log(L2Waiting);
                 io.emit('cancel consult',{type:waiting.type,casenum:waiting.casenum,abandon:true});
@@ -1069,13 +1072,14 @@ io.on('connection', function(socket){
               console.log(L2Waiting);
               console.log(onlineUsers);
               console.log(userWaiting);
-              userWaiting=L2Waiting.filter(obj => {return obj.ces === ces}).concat(CCTWaiting.filter(obj => {return obj.ces === ces})).concat(RMAWaiting.filter(obj => {return obj.ces === ces}));
+              userWaiting=L2Waiting.filter(obj => {return obj.ces === ces}).concat(CCTWaiting.filter(obj => {return obj.ces === ces})).concat(RMAWaiting.filter(obj => {return obj.ces === ces})).concat(SUPWaiting.filter(obj => {return obj.ces === ces}));
               userWaiting.forEach(function(waiting,index){
                 console.log(waiting.type);
                 switch(waiting.type.toUpperCase()){
                   case "L2":L2Waiting.splice(L2Waiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
                   case "CCT":CCTWaiting.splice(CCTWaiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
                   case "RMA":RMAWaiting.splice(RMAWaiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
+                  case "SUP":SUPWaiting.splice(SUPWaiting.findIndex(item => item.casenum === waiting.casenum),1)[0];break;
                 }
                 console.log(L2Waiting);
                 io.emit('cancel consult',{type:waiting.type,casenum:waiting.casenum,abandon:true});
@@ -1134,6 +1138,16 @@ io.on('connection', function(socket){
                 RMAWaiting.push(data);
                 io.emit('consult waiting',data);
                 console.log(RMAWaiting);
+            }
+            break;
+            case "SUP":if(SUPWaiting.findIndex(item => item.casenum === data.casenum)>=0){
+                io.to(socket.id).emit('reject consult','Consult for case number already in queue.');
+            }else if(ongoingConsult.findIndex(item => item.casenum === data.casenum)>=0){
+                io.to(socket.id).emit('reject consult','Consult for case number ongoing.');
+            }else{
+                SUPWaiting.push(data);
+                io.emit('consult waiting',data);
+                console.log(SUPWaiting);
             }
             break;
         }
@@ -1295,6 +1309,55 @@ io.on('connection', function(socket){
                     })
                 }
             break;
+            case "sup":
+                if(SUPWaiting.length>0){
+                    SUPWaiting.every(function(waiting,index){
+                        if(onlineUsers.findIndex(item => item.ces === SUPWaiting[index].ces)>=0){
+                            console.log(waiting.usertype);
+                            console.log(data.usertype);
+                            if(waiting.usertype+" "+waiting.lob.split(" ")[0]!=data.usertype+" "+data.userlob){
+                                var consultPop=SUPWaiting.splice(index,1)[0];
+                                console.log('consultPop')
+                                console.log(consultPop);
+                                console.log('RMAWaiting');
+                                console.log(SUPWaiting);
+                                randomRoom+=consultPop.ces.toString().substr(consultPop.ces.toString().length-3,3)+''+data.ces.toString().substr(data.ces.toString().length-3,3);
+                                var consultData={
+                                  type:data.type,
+                                  consultee:{
+                                    ces:consultPop.ces,
+                                    name:consultPop.name
+                                  }, 
+                                  consultant:{
+                                    ces:data.ces,
+                                    name:onlineUsers[onlineUsers.findIndex(item => item.ces === data.ces)].name
+                                  },
+                                  room:randomRoom,
+                                  casenum:consultPop.casenum,
+                                  device:consultPop.device,
+                                  summary:consultPop.summary,
+                                  reason:consultPop.reason,
+                                  requestTime:consultPop.requestTime,
+                                  serialnumber:consultPop.serialnumber,
+                                  messages:[]
+                                }
+                                consultData.consultstarted=nowDate;
+                                console.log(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id);
+                                io.to(onlineUsers[onlineUsers.findIndex(item => item.ces === consultPop.ces)].id).emit('join room',consultData);
+                                io.to(socket.id).emit('join room',consultData,0);
+                                saveConsult(consultData);
+                                ongoingConsult.push(consultData);
+                                io.emit('add ongoing',consultData);
+                                io.emit('cancel consult',{type:consultPop.type,casenum:consultPop.casenum,abandon:false});
+                                return false;
+                            }else{
+                                return true;  
+                            }
+                            
+                        }
+                    })
+                }
+            break;
         }
     })
     socket.on('cancel consult',function(data){
@@ -1311,6 +1374,10 @@ io.on('connection', function(socket){
             case "rma":
                 io.emit('cancel consult',data);
                 RMAWaiting.splice(RMAWaiting.findIndex(item => item.casenum === data.casenum),1);
+            break;
+            case "sup":
+                io.emit('cancel consult',data);
+                SUPWaiting.splice(SUPWaiting.findIndex(item => item.casenum === data.casenum),1);
             break;
         }
     })

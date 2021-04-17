@@ -35,14 +35,18 @@ html
                     a.callouts-button(href='#')
                         i.fa.fa-fw.fa-bullhorn
                         |  Callouts
-                if(userLOB!='RTA ARLO')
+                if((userLOB!='RTA ARLO')&&(userLOB.split(" ")[0]!='OS'))
                     a#consult-new(href='#')
                         i.fa.fa-fw.fa-blind
                         |  New Consult
-                if((userLevel!='2')&&(userType!='TM')&&(userLOB!='RTA ARLO'))
+                if((userLevel!='2')&&(userType!='TM')&&(userLOB!='RTA ARLO')&&(userLOB.split(" ")[0]!='CCT')&&(userLOB.split(" ")[0]!='OS'))
                     a#rma-new(href='#')
                         i.fa.fa-fw.fa-truck
                         |  RMA Approval
+                if((userType!='TM')&&(userLOB!='RTA ARLO'))
+                    a#sup-new(href='#')
+                        i.fa.fa-fw.fa-briefcase
+                        |  Sup Call
                 a.queue-button.side-link(href='#')
                     i.fa.fa-fw.fa-align-justify
                     |  Queue
@@ -56,18 +60,21 @@ html
             .queue-container.subcontainer
                 .queue-window.l2-dashboard
                     .title L2 Consult
-                    span.get-consult.get-consult-l2.button-link(onclick="getConsult('l2');") Get Consult
+                    if((userLevel=='2')||(userType=='TM')||(userLOB=='QA ARLO')||(userLOB=='Training ARLO'))
+                        span.get-consult.get-consult-l2.button-link(onclick="getConsult('l2');") Get Consult
                     .waiting-label Waiting Experts:
                     .waiting-list
                     br
                     .rma-dashboard
                         .title RMA Consult
-                        span.get-consult.get-consult-rma.button-link(onclick="getConsult('rma');") Get Consult
+                        if((userLevel=='2')||(userType=='TM')||(userLOB=='QA ARLO')||(userLOB=='Training ARLO'))
+                          span.get-consult.get-consult-rma.button-link(onclick="getConsult('rma');") Get Consult
                         .waiting-label Waiting Experts:
                         .waiting-list
                     .sup-dashboard
                         .title SupCall Request
-                        span.get-consult.get-consult-cct.button-link(onclick="getConsult('sup');") Get Consult
+                        if((userType=='TM'))
+                          span.get-consult.get-consult-sup.button-link(onclick="getConsult('sup');") Get Consult
                         .waiting-label Waiting Experts:
                         .waiting-list
                         br
@@ -76,7 +83,8 @@ html
                     .available-list
                 .queue-window.cct-dashboard
                     .title CCT Consult
-                    span.get-consult.get-consult-cct.button-link(onclick="getConsult('cct');") Get Consult
+                    if((userLOB.split(" ")[0]=='CCT'))
+                      span.get-consult.get-consult-cct.button-link(onclick="getConsult('cct');") Get Consult
                     .waiting-label Waiting Experts:
                     .waiting-list
                     br
