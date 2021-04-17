@@ -165,10 +165,10 @@ body {
 }
 
 .center-container{
-  width:calc(100% - 369px);
+  width:calc(100% - 413px);
   height:calc(100% - 202px);
   min-width:360px;
-  margin-left:370px;
+  margin-left:390px;
   margin-top:85px;
   background-color: white;
   z-index:20;
@@ -501,6 +501,41 @@ body {
 
 .queue-window{
   border:1px solid black;
+  min-width: calc(50% - 50px);
+  flex-wrap:no-wrap;
+  display:flex;
+  justify-content:top;
+  flex-direction:column;
+  margin:0px 0px 20px 20px;
+  border-radius:10px;
+  padding:10px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  height:calc(50% - 60px);
+}
+
+.rma-dashboard, .sup-dashboard{
+  height:calc(70% - 10px);
+  min-height:20px;
+  cursor:pointer;
+  flex-direction:initial;
+  display:block!important;
+  overflow-y:hidden;
+}
+
+.queue-window>div, .rma-dashboard>div, .sup-dashboard>div{
+  display: flex;
+  justify-content: left;
+  flex-direction: column;
+  white-space: nowrap;
+  overflow-x:hidden;
+  min-height:18px;
+}
+
+
+
+.l2-dashboard{
+  border:1px solid black;
   flex-basis: calc(50% - 50px); 
   display:flex;
   justify-content:top;
@@ -510,16 +545,8 @@ body {
   padding:10px;
   overflow-y:auto;
   overflow-x:hidden;
-  max-height:calc(50% - 50px);
-}
-
-.queue-window>div{
-  display: flex;
-  justify-content: left;
-  flex-direction: column;
-  white-space: nowrap;
-  overflow-x:hidden;
-  min-height:18px;
+  max-height: calc(100% - 50px)!important;
+  min-height: calc(100% - 80px)!important;
 }
 
 .ongoing-list-item{
@@ -531,20 +558,20 @@ body {
 }
 
 .queue-container{
-  display:flex;
-  flex-wrap:wrap;
-  flex-direction:row;
-  width:calc(100% - 200px);
-  height:calc(100% - 63px);
-  margin-left:160px;
-  margin-top:44px;
-  background-color: white;
-  z-index:20;
-  position:fixed;
-  padding-top:20px;
-  padding-left:20px;
-  padding-right:20px;
-  overflow-x:hidden;
+    display: flex;
+    flex-wrap: wrap;
+    flex-flow: column wrap;
+    width: calc(100% - 200px);
+    height: calc(100% - 44px);
+    margin-left: 160px;
+    margin-top: 44px;
+    background-color: white;
+    z-index: 20;
+    position: fixed;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    overflow-x: hidden;
 }
 
 .lobby-window{
@@ -607,6 +634,13 @@ body {
   cursor:pointer;
 }
 
+.rma-dashboard>.waiting-list, .sup-dashboard>.waiting-list{
+  height:calc(100% - 10px);
+  min-height:20px;
+  font-size:12px;
+  cursor:pointer;
+}
+
 .ongoing-list-item{
   padding:5px;
   border-radius:5px;
@@ -649,7 +683,7 @@ body {
   background-color:#379683;
 }
 
-.rma-dashboard, .nonvoice-online{
+.supcall-dashboard, .nonvoice-online{
   background-color:#5cdb95;
 }
 

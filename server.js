@@ -1334,6 +1334,7 @@ io.on('connection', function(socket){
   
     socket.on('end consult',function(consultData){
         if(ongoingConsult.findIndex(item => item.room === consultData.room)>=0){
+          if(onlineUsers.findIndex(item => item.id === userID)>=0){
             if(consultData.consultee.ces==onlineUsers[onlineUsers.findIndex(item => item.id === userID)].ces){
               socket.to(consultData.room).emit('end consult',consultData);
               ongoingConsult.splice(ongoingConsult.findIndex(item => item.room === consultData.room),1);
@@ -1342,6 +1343,7 @@ io.on('connection', function(socket){
               ongoingConsult.splice(ongoingConsult.findIndex(item => item.room === consultData.room),1);
             }
             io.emit('delete ongoing',consultData.room);
+          }
         }
         
     })

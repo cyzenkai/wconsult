@@ -4,6 +4,9 @@ var userID;
 var socket;
 var consultStatus;
 var notification;
+var inactivityTimeout = false;
+var resetTimeoutOK = false;
+var goReset = false;
 
 try{
   var user=JSON.parse(getCookie('userdetails'));
@@ -21,6 +24,10 @@ try{
 }catch(err){
 }
 
+$(document).mousemove(function (){
+	resetTimeout();
+});
+
 
 $(function() {
   if (Notification.permission === "granted") {
@@ -31,6 +38,8 @@ $(function() {
 			
 		});
 	}
+  
+  resetTimeout();
   
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
@@ -853,9 +862,7 @@ function addAvailable(data){
     case 'L2 Voice' :
     case 'TM TM':
       $('#'+data.ces+'.available-list-item').remove();
-      $('#'+data.ces+'.available-list-item').remove();
       $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',data.ces).addClass(randomClass).appendTo('.l2-dashboard>.available-list');
-      $('.available-list-item-template').clone().attr('class','available-list-item').attr('id',data.ces).addClass(randomClass).appendTo('.rma-dashboard>.available-list');
       break;
   }
   
@@ -1326,4 +1333,30 @@ function rtaCallout(message,randomClass,timestamp){
     })
     $('#notificationAudio').trigger('play');
   
+}
+
+function onUserInactivity(){
+	console.log(('Logging out.'))
+	try{
+		socket.emit('logout',userCES);
+	}catch(err){
+		console.log(err);
+	}
+	document.cookie = 'token=;expires=;path=/';
+	document.cookie = 'refreshToken=;expires=;path=/';
+	document.cookie = 'userdetails=;expires=;path=/';
+	location.reload(true);
+	window.open('/','_self',true);
+}
+
+function resetTimeout() {
+	clearTimeout(inactivityTimeout);
+	if(!goReset){
+		goReset=true;
+		resetTimeoutOK = setTimeout(function(){
+			console.log('Resetting inactivity.');
+			inactivityTimeout = setTimeout(onUserInactivity, 60 * 1000 * 60 * 2);
+			goReset=false
+		}, 60 * 1000 * 1);
+  }
 }

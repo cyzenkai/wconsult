@@ -60,7 +60,19 @@ html
                     .waiting-label Waiting Experts:
                     .waiting-list
                     br
-                    .available-label Available L2/TM:
+                    .rma-dashboard
+                        .title RMA Consult
+                        span.get-consult.get-consult-rma.button-link(onclick="getConsult('rma');") Get Consult
+                        .waiting-label Waiting Experts:
+                        .waiting-list
+                    .sup-dashboard
+                        .title SupCall Request
+                        span.get-consult.get-consult-cct.button-link(onclick="getConsult('sup');") Get Consult
+                        .waiting-label Waiting Experts:
+                        .waiting-list
+                        br
+                    br
+                    .available-label Available L2/TM/SME:
                     .available-list
                 .queue-window.cct-dashboard
                     .title CCT Consult
@@ -69,14 +81,6 @@ html
                     .waiting-list
                     br
                     .available-label Available CCT:
-                    .available-list
-                .queue-window.rma-dashboard
-                    .title RMA Consult
-                    span.get-consult.get-consult-rma.button-link(onclick="getConsult('rma');") Get Consult
-                    .waiting-label Waiting Experts:
-                    .waiting-list
-                    br
-                    .available-label Available L2/TM:
                     .available-list
                 .queue-window.ongoing-dashboard
                     .title Ongoing Consults
